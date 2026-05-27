@@ -20,6 +20,7 @@ website:
           - content/daily_workflow/preview.qmd
           - content/daily_workflow/render.qmd
           - content/daily_workflow/pixi-tasks.qmd
+          - content/daily_workflow/git-basics.qmd
           - content/daily_workflow/student-instructor.versions.qmd
 
       - section: "Authoring"
@@ -55,6 +56,5 @@ format:
     toc: true
     mainfont: "inter, sans-serif"
     monofont: "JetBrains Mono, monospace"
-
 
 

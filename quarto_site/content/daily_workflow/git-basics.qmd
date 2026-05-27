@@ -1,0 +1,78 @@
+---
+title: Git workflow
+---
+
+Once a repository has been cloned and GitHub access is configured, most
+updates require only a small set of Git commands. Run them from the repository
+root.
+
+## Before editing: get current changes
+
+Update your local copy before starting work:
+
+```bash
+git pull
+```
+
+If this command reports a conflict or asks for authentication, stop and
+resolve that issue before editing. See [Setting up Git](../getting_started/git.qmd)
+for additional guidance.
+
+## After editing: see what changed
+
+Check which files have been changed:
+
+```bash
+git status
+```
+
+Optionally inspect the actual text changes:
+
+```bash
+git diff
+```
+
+You normally want to commit edited `.qmd` source documents and any deliberate
+figures, datasets, or configuration changes. Avoid committing locally
+generated website output unless the repository explicitly requires it.
+
+## Send your update to GitHub
+
+Add only the files belonging to your update:
+
+```bash
+git add path/to/lesson.qmd
+```
+
+Record the update with a short message:
+
+```bash
+git commit -m "Clarify exercise instructions"
+```
+
+Push the commit to the remote repository:
+
+```bash
+git push
+```
+
+## Check the published result
+
+In repositories published through GitHub Actions, pushing usually triggers a
+new render and deployment. After pushing:
+
+1. Check the repository's **Actions** tab on GitHub.
+2. Confirm that the build completed successfully.
+3. Open the published site or output and check the updated page.
+
+## Command summary
+
+```bash
+git pull
+# edit and preview the course material
+git status
+git diff
+git add path/to/lesson.qmd
+git commit -m "Describe the change"
+git push
+```
