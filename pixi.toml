@@ -2,9 +2,20 @@
 authors = ["Mads-Peter <machri@phys.au.dk>"]
 channels = ["conda-forge"]
 name = "course-materials-handbook"
-platforms = ["osx-arm64"]
+platforms = ["osx-arm64", "linux-64", "osx-64", "win-64"]
 version = "0.1.0"
+
+
+[tasks.preview]
+cmd = "quarto preview"
+cwd = "quarto_site/"
+
+[tasks.render]
+cmd = "quarto render"
+cwd = "quarto_site/"
 
 [tasks]
 
 [dependencies]
+quarto = ">=1.9.38,<2"
+python = "==3.12"
