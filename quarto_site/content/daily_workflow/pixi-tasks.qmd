@@ -8,13 +8,31 @@ pre-render setup.
 
 ## Inspect available tasks
 
-Start with the repository documentation, then inspect `pixi.toml` or the
-`[tool.pixi.tasks]` entries in `pyproject.toml`. Run a documented task with:
+The available tasks for a project/repository can be listed with the command 
+
+```default
+pixi task list
+```
+Producing something similar to 
+
+```
+-----------------------------------
+preview, render
+Task     Description
+preview  Preview the quarto site
+render   Render the quarto site
+```
+
+More information about the available tasks can be found in the specific project documentation
+and the `pixi.toml`-file. 
+
+## Run a task
+
+Run a documented task with:
 
 ```bash
 pixi run <task-name>
 ```
-
 Some documentation uses the equivalent abbreviation `pixi r <task-name>`.
 
 ## Frequent task roles
@@ -26,6 +44,29 @@ Some documentation uses the equivalent abbreviation `pixi r <task-name>`.
 | Cleanup | `clean` | Remove previously generated material before rebuilding |
 | Setup | `github-auth`, font or package fetch tasks | Provide project-specific prerequisites |
 | Validation | figure, download, or script checks | Detect broken referenced resources |
+
+## Project specific tasks
+
+Sometimes it's useful to define a project specific task. These should be defined using tooling that 
+is available in the Pixi environment if possible, to ensure that collaborators can run them without 
+having to install additional softare. 
+
+For example, a task can run a Python script using a Pixi installed Python environment following a 
+recipe like 
+
+1. Write a Python script, e.g. in `scripts/my_task_script.py`
+2. Add it as a task to `pixi.toml`
+3. Run using `pixi run my-task`
+
+The second step involves adding a section like the one shown below to the `pixi.toml` file
+
+```
+[tasks.my-task]
+cmd = "python scripts/my_task_script.py"
+description = "Run custom Python script task."
+```
+
+See the [Pixi task documentation](https://pixi.prefix.dev/latest/workspace/advanced_tasks/) for more information.
 
 ## Examples of project-specific tasks
 

@@ -9,10 +9,12 @@ version = "0.1.0"
 [tasks.preview]
 cmd = "quarto preview"
 cwd = "quarto_site/"
+description = "Preview the quarto site"
 
 [tasks.render]
 cmd = "quarto render"
 cwd = "quarto_site/"
+description = "Render the quarto site"
 
 [tasks]
 
