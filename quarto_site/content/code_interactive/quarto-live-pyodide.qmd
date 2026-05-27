@@ -1,5 +1,14 @@
 ---
 title: Interactive Python
+format: 
+  live-html:
+    theme:
+      light: [flatly, ../../styles.scss]
+      dark: [darkly, ../../styles.scss]
+    css: ../../styles.css
+    toc: true
+    mainfont: "inter, sans-serif"
+    monofont: "JetBrains Mono, monospace"
 ---
 
 Some websites let learners execute Python directly in the browser. This is
@@ -16,13 +25,84 @@ written like this:
 ```</code></pre>
 
 When rendered by that configured project, the cell becomes an interactive
-Python area in the HTML page.
+Python area in the HTML page. Like shown below
+
+```{pyodide}
+1 + 2 + 3
+```
+
+These blocks rely on [pyodide](https://pyodide.org/en/stable/)
+which is a Python distribution for the browser based on WebAssembly. This allows 
+Python to run in the browser without the need for a server as it uses the local machine (be it a laptop, desktop or a cellphone).
 
 ::: {.callout-warning title="Project-dependent feature"}
 `pyodide` cells require the appropriate Quarto extension and output format.
 Adding the syntax to an unrelated course repository does not by itself enable
 browser execution.
 :::
+
+## Enabling interactive Python
+
+To best way to enable interactive Python is to use the [Quarto Live](https://r-wasm.github.io/quarto-live/)-extension. For a new project where it is not already enabled this requires running the command
+
+```default
+pixi run quarto add r-wasm/quarto-live
+```
+From the Quarto root directory which is where the `_quarto.yaml` is located (and typically not the repository root.). This will add an `_extensions`-directory (if one doesn't already exist)
+
+```
+_extensions
+└── r-wasm
+```
+
+After this it can be enabled for a specific `.qmd`-source document by changing the format in the header, like 
+
+```yaml
+---
+title: Interactive Python
+format: 
+  live-html:
+    theme:
+      light: [flatly, ../../styles.scss]
+      dark: [darkly, ../../styles.scss]
+    css: ../../styles.css
+    toc: true
+    mainfont: "inter, sans-serif"
+    monofont: "JetBrains Mono, monospace"
+---
+```
+
+The important part is to change the format to `live-html` the rest is just to apply consistent styling 
+compared to the other pages that have their HTML styling configured in `_quarto.yml`.
+
+## Exercises 
+
+The Quarto Live extension enables adding exercises with accompanying solution code, such that 
+exercises are automatically checked. See [Quarto Live: Creating Exercises](https://r-wasm.github.io/quarto-live/exercises/exercises.html) for more information. Below is an example of such an exercise. 
+
+
+### Example
+
+Fill in the blank so the result is 10
+
+```{pyodide}
+#| exercise: ex_1
+#| check: true
+
+if total == 10:
+    feedback = {"correct": True, "message": "That's correct!"}
+else:
+    feedback = {"correct": False, "message": "That's not quite correct"}
+
+feedback
+```
+
+
+```{pyodide}
+#| exercise: ex_1
+total = 1 + 2 + 3 + ______
+print(total)
+```
 
 ## When to use interactive Python
 
