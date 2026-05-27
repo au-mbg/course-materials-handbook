@@ -29,7 +29,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: course_notes/_site
+          path: quarto_site/_site
 
   deploy:
     needs: build
