@@ -17,7 +17,7 @@ Look for these files and directories:
 | `_quarto.yml` | Project type, output formats, navigation, and resources |
 | `_quarto-<profile>.yml` | Optional learner-facing or answer-bearing variants |
 | `*.qmd` content folders | The source documents to edit |
-| `_extensions/` or `filters/` | Project-specific features such as hidden solutions |
+| `_extensions/` or `filters/` | Installed features such as `quarto-teaching-tools` solution handling |
 | `.github/workflows/` | Automated render and publication behavior |
 | `_site/`, `_output/`, or similar | Rendered output; usually inspect, do not edit |
 
@@ -33,8 +33,9 @@ From the repository root:
 
 ::: {.callout-tip title="Patterns seen in existing courses"}
 An ordinary website may contain `course_notes/_quarto.yml` and use
-`pixi run preview`. A profiled site may add commands such as
-`pixi run preview exercise`. A notebook/report project may select both a
-document and a `student` or `instructor` profile. Treat these as examples:
-the repository in front of you defines the actual command.
+`pixi run preview`. A new profiled project should prefer
+`pixi run preview student` and `pixi run preview instructor`, backed by
+`teaching.show-solutions`. Existing projects may instead use names such as
+`exercise`/`solution` or `student`/`master`; their configured command remains
+authoritative.
 :::

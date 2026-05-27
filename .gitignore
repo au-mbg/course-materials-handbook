@@ -5,3 +5,6 @@
 # Quarto
 .quarto/
 _site/
+
+# Stuff
+.DS_Store

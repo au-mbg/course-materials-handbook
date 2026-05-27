@@ -20,7 +20,7 @@ pixi run preview
 ```
 
 If the repository uses profiles, choose the view that is most relevant to the
-edit, for example:
+edit. New projects should use the student profile:
 
 ```bash
 pixi run preview student
@@ -46,15 +46,16 @@ change.
 ## 4. Check project variants
 
 If the changed page can differ between learner-facing and answer-bearing
-outputs, preview the second variant as well:
+outputs, preview the instructor variant as well:
 
 ```bash
 pixi run preview instructor
 ```
 
-The profile names may instead be `exercise`/`solution` or
-`student`/`master`. For a notebook/report project, also check the selected
-exercise or report document and the rendered notebook or PDF when applicable.
+In existing projects the profile names may instead be `exercise`/`solution`
+or `student`/`master`; use those configured task arguments while maintaining
+that project. For a notebook/report project, also check the selected exercise
+or report document and the rendered notebook or PDF when applicable.
 
 ## 5. Render and review changes
 

@@ -15,8 +15,8 @@ pixi run render-all
 ```
 
 `render` often produces one default output. `render-all` commonly builds every
-required profile or format, such as learner-facing and answer-bearing sites,
-notebooks, and PDFs.
+required profile or format, such as the recommended `student` and
+`instructor` sites, notebooks, and PDFs.
 
 ## Rendered output is derived material
 
@@ -28,7 +28,10 @@ configuration that generated them.
 ## What to render before committing
 
 - For prose or layout edits, render at least the affected site or document.
-- For content hidden or shown by profile, render every relevant profile.
+- For content selected by `teaching.show-solutions`, render both `student`
+  and `instructor` profiles.
+- For an existing project with alternate profile names or local filters,
+  render all variants declared by that project.
 - For executable material, check that code runs and that notebook/PDF/HTML
   variants contain the intended output.
 - For changed figures, links, or downloads, run repository-provided validation

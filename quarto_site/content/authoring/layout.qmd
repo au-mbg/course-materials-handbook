@@ -26,11 +26,11 @@ repository/
 ├── .github/workflows/
 └── course_notes/
     ├── _quarto.yml
-    ├── _quarto-exercise.yml       # optional profile
-    ├── _quarto-solution.yml       # optional profile
+    ├── _quarto-student.yml        # recommended learner-facing profile
+    ├── _quarto-instructor.yml     # recommended answer-bearing profile
     ├── exercises/                 # source documents
     ├── files/                     # downloads or assets
-    ├── _extensions/               # configured authoring features
+    ├── _extensions/               # e.g. quarto-teaching-tools
     └── _site/                     # rendered website
 ```
 
@@ -50,4 +50,5 @@ repository/
 
 The repository may use different names or combine website and notebook
 outputs. The useful distinction is between maintained source and derived
-output, not the exact directory layout.
+output, not the exact directory layout. For the reader-facing organization of
+a website, see [Organizing website content](organizing-website-content.qmd).

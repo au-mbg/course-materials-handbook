@@ -3,27 +3,92 @@ title: Quarto extensions
 ---
 
 Extensions, filters, and shortcodes add authoring behavior beyond basic
-Quarto Markdown. They explain why syntax used in one course may not work in
-another.
+Quarto Markdown. For new teaching-material projects, use the reusable
+[`au-mbg/quarto-teaching-tools`](https://github.com/au-mbg/quarto-teaching-tools)
+extensions rather than creating local equivalents.
 
-## Features seen in course repositories
+## Teaching tools
 
-| Feature | Example authoring pattern | Infrastructure required |
+| Extension | Role | Recommended use |
 | --- | --- | --- |
-| Browser-executed Python | A `pyodide` executable cell | Live/Pyodide extension and compatible HTML format |
-| Hidden answer blocks | `.callout-solution` divs | Solution-rendering extension or filter |
-| Learner/answer code filtering | `#| exercise: true`, `#| solution: true` | Profile-specific Lua filters |
-| Download controls | A `download-button` shortcode | Repository-provided shortcode or extension |
+| `callout-solution` | Versioned answer callouts | Instructor-only explanations written as `.callout-solution` divs |
+| `strip-solution` | Versioned divs and code cells | Blocks marked `teaching: exercise` or `teaching: solution` |
+| `collapse-callouts` | Presentation helper | Set default collapsed state for standard callout types |
+| `download-button` | Resource helper | Provide prominent downloadable files through a shortcode |
+
+Install an extension from the repository root and commit the resulting
+`_extensions/` contents:
+
+```bash
+quarto install extension au-mbg/quarto-teaching-tools/extensions/callout-solution
+quarto install extension au-mbg/quarto-teaching-tools/extensions/strip-solution
+quarto install extension au-mbg/quarto-teaching-tools/extensions/collapse-callouts
+quarto install extension au-mbg/quarto-teaching-tools/extensions/download-button
+```
+
+Only install the extensions the project uses. Enable filters such as
+`callout-solution`, `strip-solution`, and `collapse-callouts` in the project's
+Quarto configuration.
+
+## Versioning extensions
+
+Both versioning extensions are controlled by profile metadata:
+
+```yaml
+teaching:
+  show-solutions: true
+  default-solution-title: "Solution"
+```
+
+`callout-solution` renders `.callout-solution` blocks as collapsed instructor
+callouts only when solutions are shown. `strip-solution` keeps exercise blocks
+for `show-solutions: false` and solution blocks for `show-solutions: true`.
+When that setting is absent, `strip-solution` leaves both kinds of block in
+the output.
+
+For new content, use `teaching="exercise"` or `teaching="solution"` on divs,
+and `#| teaching: exercise` or `#| teaching: solution` in code cells. Boolean
+options such as `exercise: true` and `solution: true` are compatibility syntax
+for existing content.
+
+## Presentation and download extensions
+
+`collapse-callouts` provides project-level defaults for ordinary Quarto
+callouts:
+
+```yaml
+teaching:
+  collapse-notes: true
+  collapse-warnings: true
+  collapse-importants: true
+  collapse-tips: true
+  collapse-cautions: true
+```
+
+`download-button` provides a shortcode for resources such as datasets or
+scripts:
+
+<pre><code>{{&lt; download-button path="../files/data.csv" text="Download dataset" filename="data.csv" &gt;}}</code></pre>
+
+## Existing use
+
+`structure_biology` already includes `callout-solution`,
+`collapse-callouts`, and `download-button` from this extension family. It is
+a concrete example of these authoring features in course material, although
+its `exercise`/`solution` profile naming predates the recommended
+`student`/`instructor` convention.
 
 ## Contributor guidance
 
 When editing ordinary course content:
 
 - Reuse extension syntax already present in nearby source documents.
-- Check the corresponding learner-facing and answer-bearing outputs where
-  filtering is involved.
+- Use the teaching-tools syntax above when adding new conditional content to
+  a project configured with these extensions.
+- Check the corresponding student and instructor outputs where filtering is
+  involved.
 - Run project-provided validators for assets or scripts when relevant.
-- Do not add or modify extensions simply to make a small content edit.
+- Do not modify installed extension code simply to make a small content edit.
 
 ## Maintainer guidance
 

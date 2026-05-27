@@ -5,18 +5,41 @@ title: Quarto profiles
 Profiles let a Quarto project reuse source documents while changing render
 settings for a particular audience or product.
 
+## Recommended profile names
+
+New teaching-material projects should use `student` for learner-facing output
+and `instructor` for answer-bearing output. These names align with the
+`teaching.show-solutions` metadata used by the
+[`quarto-teaching-tools`](https://github.com/au-mbg/quarto-teaching-tools)
+versioning extensions.
+
+## Base configuration
+
+Install `callout-solution` and/or `strip-solution` and list the filters used
+by the project in `_quarto.yml`:
+
+```yaml
+filters:
+  - callout-solution
+  - strip-solution
+```
+
+`callout-solution` is appropriate for instructor-only answer callouts;
+`strip-solution` is appropriate when student and instructor versions select
+different divs or code cells.
+
 ## Profile files
 
-A base configuration might define shared formats and resources, while profile
-files select output folders and filters:
+The profile files select output destinations and set the explicit solution
+visibility switch:
 
 ```yaml
 # _quarto-student.yml
 project:
   output-dir: _output/student
 
-filters:
-  - filters/strip-solution.lua
+teaching:
+  show-solutions: false
 ```
 
 ```yaml
@@ -24,24 +47,40 @@ filters:
 project:
   output-dir: _output/instructor
 
-filters:
-  - filters/strip-exercise.lua
+teaching:
+  show-solutions: true
+  default-solution-title: "Solution"
 ```
 
-The project can then expose a task that passes the chosen profile to Quarto:
+Define Pixi tasks that pass the selected profile to Quarto:
 
-```bash
-quarto render --profile student
+```toml
+[tasks.preview]
+args = [{ "arg" = "profile", default = "student",
+          choices = ["student", "instructor"] }]
+cmd = "quarto preview --profile {{profile}}"
+cwd = "course"
+
+[tasks.render]
+args = [{ "arg" = "profile", default = "student",
+          choices = ["student", "instructor"] }]
+cmd = "quarto render --profile {{profile}}"
+cwd = "course"
 ```
 
-Contributors generally run the equivalent `pixi run ...` task instead of
-calling Quarto directly.
+Contributors can then run commands such as `pixi run preview student` or
+`pixi run render instructor`.
+
+Set `teaching.show-solutions` explicitly in both profiles. The
+`callout-solution` extension can recognize a profile name containing
+`solution` as a fallback, but that is not the recommended configuration for
+new projects.
 
 ## Existing naming patterns
 
 Different courses use `exercise`/`solution`, `student`/`instructor`, or
-`student`/`master`. The labels are not interchangeable: use the configured
-profile names and check the output paths associated with them.
+`student`/`master`. Maintain these existing projects using their configured
+task names and filters; use `student`/`instructor` for new projects.
 
 ## When profiles matter
 
@@ -52,5 +91,6 @@ Render all affected profiles when changing:
 - Links between variants or shared navigation.
 - Profile-dependent format output such as notebooks or PDFs.
 
-Profile behavior may rely on filters or extensions as well as the YAML file,
-so investigate all configured parts before changing the visibility model.
+Profile behavior relies on extension configuration and metadata as well as
+the YAML profile file, so investigate all configured parts before changing
+the visibility model.

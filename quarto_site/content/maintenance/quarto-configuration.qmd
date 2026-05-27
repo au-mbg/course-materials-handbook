@@ -37,7 +37,7 @@ Key responsibilities include:
 | `website` | Site title, navigation, search, sidebar, and links |
 | `format` | HTML, notebook, PDF/Typst, and formatting options |
 | `resources` | Files copied into published output |
-| `filters` | Content transformations such as solution filtering |
+| `filters` | Content transformations such as teaching-tools solution handling |
 
 ## Multiple output formats
 
@@ -58,7 +58,16 @@ or exercise correction.
 
 ## Related configuration
 
-Profile files such as `_quarto-student.yml` extend or override the base
-configuration for a particular output. Extensions, filters, and Pixi tasks
-may also influence the render. Read them together when investigating why a
-page appears differently from its source.
+For new projects with student and instructor outputs, install the teaching
+tools and configure their filters in the base configuration:
+
+```yaml
+filters:
+  - callout-solution
+  - strip-solution
+```
+
+Profile files such as `_quarto-student.yml` then extend or override the base
+configuration and set `teaching.show-solutions`. Extensions, filters, and
+Pixi tasks may all influence the render; read them together when
+investigating why a page appears differently from its source.

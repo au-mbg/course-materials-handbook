@@ -25,13 +25,14 @@ The task signature depends on the project:
 | Project shape | Example command | Meaning |
 | --- | --- | --- |
 | One website | `pixi run preview` | Preview the site's HTML output |
-| Learner-facing and answer-bearing website | `pixi run preview exercise` or `pixi run preview solution` | Select a profile before previewing |
-| Site with student/master profiles | `pixi run preview student` or `pixi run preview master` | Select the repository's terminology |
+| Recommended profiled project | `pixi run preview student` or `pixi run preview instructor` | Select learner-facing or answer-bearing output |
+| Existing alternate profiles | `pixi run preview exercise` / `solution`, or `student` / `master` | Follow a repository's established terminology |
 | Report or notebook set | `pixi run preview 1 student` | Select a document and profile |
 
-These examples reflect existing course repositories; they are not interchangeable
-commands. Check `README.md`, `pixi.toml`, or `pyproject.toml` for the accepted
-arguments in the repository being edited.
+For new projects, prefer `student`/`instructor` profiles configured through
+the teaching-tools `teaching.show-solutions` setting. When maintaining an
+existing repository, check `README.md`, `pixi.toml`, or `pyproject.toml` for
+its accepted arguments rather than renaming its workflow incidentally.
 
 ## While previewing
 

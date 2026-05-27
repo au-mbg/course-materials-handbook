@@ -65,6 +65,15 @@ Use the same units throughout the calculation.
 :::
 ```
 
+Projects using the teaching-tools `callout-solution` extension can write an
+answer that appears only in instructor output:
+
+```markdown
+::: {.callout-solution title="Worked solution"}
+Explain the answer here.
+:::
+```
+
 Quarto includes can avoid copying a long external code example:
 
 <pre><code>```default
@@ -74,17 +83,19 @@ Quarto includes can avoid copying a long external code example:
 Paths remain relative to the current source document unless configured
 otherwise.
 
-## Downloads and custom features
+## Downloadable resources
 
-One existing course site provides a custom download-button shortcode:
+Projects using the teaching-tools `download-button` extension can provide a
+downloadable learner resource:
 
 <pre><code>
-{{&lt; download-button path="../files/example.pml" filename="example.pml" &gt;}}
+{{&lt; download-button path="../files/example.pml" text="Download script" filename="example.pml" &gt;}}
 </code></pre>
 
-This is extension-dependent syntax, not a built-in requirement for all course
-repositories. Use it only where the repository already configures the
-shortcode, and run its download-link check task if available.
+This syntax requires the installed extension. `structure_biology` already
+uses this extension family for downloadable files and solution callouts. Run
+any repository-provided download-link check task after changing resource
+paths.
 
 ## Authoring loop
 

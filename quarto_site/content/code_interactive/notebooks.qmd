@@ -32,7 +32,8 @@ used for Colab links.
 These repositories illustrate a reusable model:
 
 1. Author one `.qmd` document with executable material.
-2. Apply profile-specific filtering where required.
+2. For new projects, use `student`/`instructor` profiles and
+   `strip-solution` teaching markers where cells or blocks differ.
 3. Render distributable formats.
 4. Link learners to the appropriate notebook or Colab location.
 
@@ -40,7 +41,8 @@ These repositories illustrate a reusable model:
 
 - Do not make lasting course-content updates directly in a generated
   `.ipynb`; regenerate it from `.qmd`.
-- Check starter cells and answer cells in each relevant profile.
+- Check starter cells and answer cells in each relevant profile; new projects
+  should use `#| teaching: exercise` and `#| teaching: solution`.
 - Execute or render the document to catch code errors and missing dependencies.
 - Verify Colab-facing output after changes affecting paths, imports, datasets,
   or required packages.

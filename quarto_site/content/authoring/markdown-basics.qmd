@@ -22,11 +22,27 @@ This is **important** and this is *emphasized*.
 [Quarto documentation](https://quarto.org/)
 ```
 
-## Figures and mathematics
+## Figures 
+
+Figures are included using the syntax shown below
 
 ```markdown
 ![A descriptive caption](figures/result.png){width=70%}
+```
 
+![A descriptive caption](../assets/figure_example.png){width=70%}
+
+Paths are relative to the source document unless the project configures
+otherwise. Preview after adding or moving a figure. 
+
+
+In the above example `width=70%` means the figure takes up 70% of the available text space. See the [Quarto documentation on figures](https://quarto.org/docs/authoring/figures.html) for customization options.
+
+## Mathematics
+
+Math is written using LaTeX syntax, like 
+
+```markdown
 Inline notation uses $K_M$, while a displayed equation uses:
 
 $$
@@ -34,8 +50,11 @@ v = \frac{V_{\max}[S]}{K_M + [S]}
 $$
 ```
 
-Paths are relative to the source document unless the project configures
-otherwise. Preview after adding or moving a figure.
+Inline notation uses $K_M$, while a displayed equation uses:
+
+$$
+v = \frac{V_{\max}[S]}{K_M + [S]}
+$$
 
 ## Displayed code
 
@@ -65,8 +84,46 @@ Remember to use concentrations in mol/L.
 :::
 ```
 
-A custom class such as `.callout-solution` may be meaningful only in a
-repository that supplies the matching extension or filter.
+In projects with the teaching-tools `callout-solution` extension, use
+`.callout-solution` for an answer callout that should appear only in
+instructor output. Ordinary callouts remain suitable for material shown to
+both audiences. Below each of the ordinary callouts are shown
+
+::: {.callout-note}
+This is a note
+:::
+
+::: {.callout-tip}
+This is a tip
+:::
+
+::: {.callout-important}
+This is an "important"
+:::
+
+::: {.callout-caution}
+This is a caution
+:::
+
+::: {.callout-warning}
+This is a warning
+:::
+
+Each callout can also optionally include whether it can be folded using 
+
+```
+::: {.callout-warning collapse="true"}
+This is a warning that is initial collapsed. It might be collapsed because it has a 
+lot of text.. 
+:::
+```
+
+::: {.callout-warning collapse="true"}
+This is a warning that is initial collapsed. It might be collapsed because it has a 
+lot of text.. 
+
+{{< lipsum 2 >}}
+:::
 
 ## Front matter
 

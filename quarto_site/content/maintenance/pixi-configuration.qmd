@@ -39,8 +39,10 @@ cmd = "quarto preview --profile {{mode}}"
 cwd = "course"
 ```
 
-This is why the command a contributor runs must come from that repository's
-documentation or task manifest: profile labels and defaults differ.
+This `student`/`instructor` form is recommended for new projects using
+teaching-tools. Existing repositories may retain other profile labels, so the
+command a contributor runs must still come from that repository's
+documentation or task manifest.
 
 ## Supporting tasks
 

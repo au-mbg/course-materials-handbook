@@ -1,0 +1,184 @@
+---
+title: Organizing website content
+---
+
+A Quarto website has two related structures:
+
+- The file structure, which determines where source documents and resources
+  live in the repository.
+- The navigation structure, which determines how readers move through the
+  rendered website.
+
+These structures often resemble each other, but they are not the same. Moving
+a `.qmd` file into a folder does not automatically place it in the sidebar,
+and changing sidebar order does not require moving the source file.
+
+## Find the website configuration
+
+Website navigation is usually defined in `_quarto.yml`, or in a metadata file
+loaded by `_quarto.yml`. Look for a `website:` section containing `navbar:`
+and/or `sidebar:`.
+
+```yaml
+website:
+  title: "Course notes"
+  sidebar:
+    contents:
+      - index.qmd
+      - lessons/introduction.qmd
+      - lessons/enzymes.qmd
+```
+
+The list under `contents` controls the displayed order. A page can exist and
+render successfully without appearing in navigation, so always check the
+rendered site after adding material.
+
+## Choose a reader-facing structure
+
+Organize navigation around what readers need to find, rather than around every
+internal repository directory. Common top-level areas include:
+
+- Course overview or home page.
+- Weekly lessons or exercises.
+- Practical guides and setup material.
+- Datasets, downloads, or reference material.
+
+A small website can use one sidebar with sections:
+
+```yaml
+website:
+  sidebar:
+    style: "docked"
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: "Exercises"
+        contents:
+          - exercises/week-01.qmd
+          - exercises/week-02.qmd
+      - section: "Resources"
+        contents:
+          - resources/datasets.qmd
+          - resources/software.qmd
+```
+
+Use a landing page such as `exercises/index.qmd` when a section benefits from
+an introduction, instructions, or a table of contents of its own.
+
+## Navbar and separate sidebars
+
+For a larger site, the navbar can identify major areas while sidebars provide
+the detailed sequence within each area. For example, a site may give
+exercises, software guides, and videos their own navbar destinations and
+their own sidebar groups:
+
+```yaml
+website:
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: exercises/index.qmd
+        text: Exercises
+      - href: guides/index.qmd
+        text: Guides
+
+  sidebar:
+    - id: exercises-sidebar
+      contents:
+        - section: "Exercises"
+          contents:
+            - exercises/week-01.qmd
+            - exercises/week-02.qmd
+    - id: guides-sidebar
+      contents:
+        - section: "Guides"
+          contents:
+            - guides/installation.qmd
+            - guides/using-software.qmd
+```
+
+This pattern is useful when each area contains many pages. Keep the navbar
+short: it should expose major destinations, not duplicate every sidebar item.
+
+## Explicit order or automatic inclusion
+
+An explicit list makes teaching sequence and omissions easy to review:
+
+```yaml
+contents:
+  - lessons/week-01.qmd
+  - lessons/week-02.qmd
+  - lessons/revision.qmd
+```
+
+A wildcard is convenient for a regular collection of pages:
+
+```yaml
+contents: lessons/*.qmd
+```
+
+Use a wildcard only where the filenames give a reliable order and every
+matching document belongs in navigation. Prefer an explicit list when:
+
+- Lessons must appear in a deliberate teaching sequence.
+- Draft or helper `.qmd` files are stored in the same folder.
+- Navigation text or grouping needs individual control.
+
+Some projects also build listing pages from a directory. A listing can give
+readers an overview of automatically discovered lessons, while the sidebar
+still controls how they browse the site.
+
+## Add a new page
+
+When adding a lesson or guide:
+
+1. Place the new `.qmd` source document in the appropriate content folder.
+2. Add referenced figures, datasets, or downloads at paths that make sense
+   alongside the existing resources.
+3. Add the new document to the appropriate sidebar section, unless a reviewed
+   wildcard or listing intentionally handles it.
+4. Add or update a navbar destination only if a new major site area is being
+   introduced.
+5. Preview the site and follow the navigation link to the new page.
+
+For a site with student and instructor profiles, keep shared navigation in
+the base configuration where possible, and preview both profiles if the new
+page contains solution-controlled content.
+
+## Reorganize existing material
+
+Reorganizing navigation without moving files is usually the lowest-risk
+change: change section headings or item order in the sidebar and render the
+site.
+
+If source files also need to move or be renamed:
+
+1. Move the `.qmd` source document and any resources that should move with it.
+2. Update sidebar and navbar paths in the Quarto configuration.
+3. Update links, image paths, includes, download-button paths, and Colab or
+   external links that point at the old location.
+4. Check any `project.render`, `resources`, `resource-path`, listing, or
+   workflow configuration that selects files by path.
+5. Render every published profile and output format affected by the move.
+6. Inspect `git diff` to confirm that generated output is not replacing
+   intended source changes.
+
+::: {.callout-warning title="Profiles should share information architecture"}
+Student and instructor output may differ in answer visibility, but readers
+should normally find the same lesson at the same conceptual location. Avoid
+maintaining unrelated sidebar organizations for the two profiles unless
+there is a specific publication requirement.
+:::
+
+## Existing course patterns
+
+- `imol` uses a navbar entry for its Python introduction and an explicitly
+  ordered sidebar for the individual lessons.
+- `structure_biology` divides a larger site into navbar areas with dedicated
+  sidebar groups for exercises, guides, setup material, and videos.
+- `fysisk_biokemi` uses wildcard sidebar contents for regular lesson and quiz
+  collections, together with a listing-based landing page.
+
+Choose the simplest pattern that makes the learner's path through the
+material obvious, then keep the structure consistent as the course grows.

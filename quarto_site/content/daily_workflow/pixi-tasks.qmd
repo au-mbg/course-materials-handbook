@@ -43,7 +43,8 @@ copy outputs for use in Colab. Such helpers are not general Quarto commands;
 use them only in the repository where they are configured.
 
 ::: {.callout-warning title="Do not infer task arguments"}
-`solution`, `instructor`, and `master` can all name an answer-bearing output
-in different projects. Read the task definition before running a profiled
-build or documenting its results.
+New projects should expose `student` and `instructor` profile arguments and
+configure visibility using `teaching.show-solutions`. Existing repositories
+may use `solution` or `master` for answer-bearing output; read their task
+definitions before running or documenting a build.
 :::

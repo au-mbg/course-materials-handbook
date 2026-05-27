@@ -25,6 +25,7 @@ website:
       - section: "Authoring"
         contents:
           - content/authoring/layout.qmd
+          - content/authoring/organizing-website-content.qmd
           - content/authoring/markdown-basics.qmd
           - content/authoring/editing-qmd-files.qmd
           - content/authoring/editing-tutorial.qmd
@@ -54,7 +55,6 @@ format:
     toc: true
     mainfont: "inter, sans-serif"
     monofont: "JetBrains Mono, monospace"
-
 
 
 

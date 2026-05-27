@@ -79,10 +79,11 @@ A learner-facing version can omit answers or provide starter code, while an
 answer-bearing version includes instructor material. Other projects publish
 only one site, or publish notebooks and printable reports alongside HTML.
 
-The mechanism is repository-dependent: profiles, filters, extensions, and
-task arguments determine what is produced. The reliable habit is to edit
-shared source documents, preview the relevant variant, and use the configured
-task to render final outputs.
+For new projects, this handbook recommends `student` and `instructor`
+profiles plus the `quarto-teaching-tools` extensions, controlled through
+`teaching.show-solutions`. Existing projects may use different profile names
+or local filters. In either case, edit shared source documents, preview the
+relevant variant, and use the configured task to render final outputs.
 
 ## What contributors usually change
 
