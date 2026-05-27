@@ -3,19 +3,26 @@ project:
 
 website:
   title: "Course Materials Handbook"
-  navbar:
-    left:
+  sidebar:
+    style: "docked"
+    contents:
       - href: index.qmd
         text: Home
-      - about.qmd
+      
+  margin-header: | 
+    ![](assets/aulogo_uk_var2_blue.png)
+  favicon: assets/aulogo_uk_var2_blue.png
 
 format:
   html:
     theme:
-      - cosmo
-      - brand
+      light: [flatly, styles.scss]
+      dark: [darkly, styles.scss]
     css: styles.css
     toc: true
+    mainfont: "inter, sans-serif"
+    monofont: "JetBrains Mono, monospace"
+
 
 
 

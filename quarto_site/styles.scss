@@ -1,0 +1,20 @@
+/*-- scss:defaults --*/
+$secondary: #003d73;
+$navbar-bg: $secondary;
+
+/* Inline code (global defaults for both modes) */
+$code-color: var(--bs-body-color);
+$code-bg: rgba(var(--bs-secondary-bg-rgb), .25);
+
+/*-- scss:rules --*/
+/* In headings, inline code tends to be the problematic case */
+// :is(h1,h2,h3,h4,h5,h6) code {
+//   padding: .12em .24em;
+//   border-radius: .1rem;
+// }
+
+/* Make heading-inline-code explicitly readable in dark mode */
+// [data-bs-theme="dark"] :is(h1,h2,h3,h4,h5,h6) code {
+//   color: var(--bs-body-color);
+//   background-color: rgba(var(--bs-secondary-bg-rgb), .55);
+// }
