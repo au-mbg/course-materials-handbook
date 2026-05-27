@@ -1,3 +1,33 @@
 ---
 title: Quarto extensions
 ---
+
+Extensions, filters, and shortcodes add authoring behavior beyond basic
+Quarto Markdown. They explain why syntax used in one course may not work in
+another.
+
+## Features seen in course repositories
+
+| Feature | Example authoring pattern | Infrastructure required |
+| --- | --- | --- |
+| Browser-executed Python | A `pyodide` executable cell | Live/Pyodide extension and compatible HTML format |
+| Hidden answer blocks | `.callout-solution` divs | Solution-rendering extension or filter |
+| Learner/answer code filtering | `#| exercise: true`, `#| solution: true` | Profile-specific Lua filters |
+| Download controls | A `download-button` shortcode | Repository-provided shortcode or extension |
+
+## Contributor guidance
+
+When editing ordinary course content:
+
+- Reuse extension syntax already present in nearby source documents.
+- Check the corresponding learner-facing and answer-bearing outputs where
+  filtering is involved.
+- Run project-provided validators for assets or scripts when relevant.
+- Do not add or modify extensions simply to make a small content edit.
+
+## Maintainer guidance
+
+If a feature must be introduced or altered, inspect `_extensions/`, `filters/`,
+profile files, output formats, and CI render commands as one change. A filter
+can affect what is published even when a source document looks correct in
+isolation.

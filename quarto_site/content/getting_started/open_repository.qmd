@@ -1,3 +1,40 @@
 ---
 title: Open a course repository
 ---
+
+Before editing a new repository, identify how it is built and where its
+maintained source documents live. Course repositories share broad roles, but
+not necessarily the same directory names or task arguments.
+
+## First inspection
+
+Look for these files and directories:
+
+| Location | What it tells you |
+| --- | --- |
+| `README.md` or an authoring guide | The intended contributor workflow and supported commands |
+| `pixi.toml` or `pyproject.toml` | Dependencies and tasks such as `preview` or `render` |
+| `_quarto.yml` | Project type, output formats, navigation, and resources |
+| `_quarto-<profile>.yml` | Optional learner-facing or answer-bearing variants |
+| `*.qmd` content folders | The source documents to edit |
+| `_extensions/` or `filters/` | Project-specific features such as hidden solutions |
+| `.github/workflows/` | Automated render and publication behavior |
+| `_site/`, `_output/`, or similar | Rendered output; usually inspect, do not edit |
+
+## Establish the workflow
+
+From the repository root:
+
+1. Read its documentation and task manifest.
+2. Identify the `.qmd` file associated with the page or exercise to change.
+3. Determine whether there are multiple profiles or output formats to verify.
+4. Run the documented preview task before editing.
+5. Make the smallest source change necessary and re-check its rendered output.
+
+::: {.callout-tip title="Patterns seen in existing courses"}
+An ordinary website may contain `course_notes/_quarto.yml` and use
+`pixi run preview`. A profiled site may add commands such as
+`pixi run preview exercise`. A notebook/report project may select both a
+document and a `student` or `instructor` profile. Treat these as examples:
+the repository in front of you defines the actual command.
+:::

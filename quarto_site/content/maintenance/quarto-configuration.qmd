@@ -1,3 +1,64 @@
 ---
 title: Quarto configuration
 ---
+
+Quarto configuration defines how source documents become rendered outputs.
+For most course edits it is context to understand, not a file to modify.
+
+## The main configuration file
+
+Projects commonly place `_quarto.yml` next to their source documents. A
+website may contain settings like:
+
+```yaml
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Course notes"
+  sidebar:
+    contents:
+      - index.qmd
+      - lessons/*.qmd
+
+format:
+  html:
+    toc: true
+```
+
+Key responsibilities include:
+
+| Configuration area | Purpose |
+| --- | --- |
+| `project.type` | Website project or document-oriented/default project |
+| `project.output-dir` | Destination for rendered output |
+| `project.render` | Which source documents should be built |
+| `website` | Site title, navigation, search, sidebar, and links |
+| `format` | HTML, notebook, PDF/Typst, and formatting options |
+| `resources` | Files copied into published output |
+| `filters` | Content transformations such as solution filtering |
+
+## Multiple output formats
+
+A notebook/report project can request several formats:
+
+```yaml
+format:
+  html:
+    toc: true
+  ipynb: default
+  typst:
+    toc: true
+```
+
+The exact formats and output folders are project choices. Update configuration
+only when the required published product changes, not to make a normal prose
+or exercise correction.
+
+## Related configuration
+
+Profile files such as `_quarto-student.yml` extend or override the base
+configuration for a particular output. Extensions, filters, and Pixi tasks
+may also influence the render. Read them together when investigating why a
+page appears differently from its source.

@@ -1,3 +1,53 @@
 ---
 title: Repository layout
 ---
+
+A Quarto course repository usually separates authored content, build
+configuration, support resources, and rendered output. Learn the role of each
+area before deciding where to edit.
+
+## Common roles
+
+| Role | Typical files or folders | Edit during ordinary content work? |
+| --- | --- | --- |
+| Source documents | `index.qmd`, `lessons/*.qmd`, `exercises/*.qmd` | Yes |
+| Assets and data | `figures/`, `media/`, `datasets/`, `files/` | Yes, when referenced content changes |
+| Quarto configuration | `_quarto.yml`, `_quarto-<profile>.yml` | Only for rendering/navigation changes |
+| Extensions and filters | `_extensions/`, `filters/` | Only for feature/infrastructure changes |
+| Reproducible tools | `pixi.toml`, `pyproject.toml`, `pixi.lock` | Only for tool/task changes |
+| Published build | `.github/workflows/` | Only for deployment changes |
+| Rendered output | `_site/`, `_output/`, `_site-combined/` | Inspect, generally do not edit |
+
+## Website-style project
+
+```text
+repository/
+├── pixi.toml
+├── .github/workflows/
+└── course_notes/
+    ├── _quarto.yml
+    ├── _quarto-exercise.yml       # optional profile
+    ├── _quarto-solution.yml       # optional profile
+    ├── exercises/                 # source documents
+    ├── files/                     # downloads or assets
+    ├── _extensions/               # configured authoring features
+    └── _site/                     # rendered website
+```
+
+## Notebook/report-style project
+
+```text
+repository/
+├── pixi.toml
+└── lab_report/
+    ├── _quarto.yml
+    ├── _quarto-student.yml
+    ├── _quarto-instructor.yml
+    ├── report_1.qmd               # canonical source document
+    ├── filters/
+    └── _output/                   # HTML, PDF, and notebook output
+```
+
+The repository may use different names or combine website and notebook
+outputs. The useful distinction is between maintained source and derived
+output, not the exact directory layout.

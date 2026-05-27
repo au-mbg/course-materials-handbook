@@ -1,3 +1,41 @@
 ---
 title: Interactive Python
 ---
+
+Some websites let learners execute Python directly in the browser. This is
+useful for short exploratory tasks where immediate feedback is more important
+than distributing a full notebook.
+
+## Browser-executed cells
+
+The `imol` course site uses configured Quarto live/Pyodide support for cells
+written like this:
+
+<pre><code>```&#123;pyodide&#125;
+1 + 2 + 3
+```</code></pre>
+
+When rendered by that configured project, the cell becomes an interactive
+Python area in the HTML page.
+
+::: {.callout-warning title="Project-dependent feature"}
+`pyodide` cells require the appropriate Quarto extension and output format.
+Adding the syntax to an unrelated course repository does not by itself enable
+browser execution.
+:::
+
+## When to use interactive Python
+
+Interactive cells suit small calculations, quick data exploration, and
+low-setup introductions to programming. Prefer rendered notebooks or a normal
+execution workflow when learners need:
+
+- Larger code workflows or many interdependent cells.
+- Installed packages not supported by the in-browser environment.
+- Persistent files, saved work, or assessment submission.
+
+## Authoring checks
+
+Preview the actual website output after editing an interactive cell. Confirm
+that the cell loads, accepts input, executes expected examples, and still
+works in the page layout used for learners.

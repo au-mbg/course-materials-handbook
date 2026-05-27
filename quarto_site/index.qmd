@@ -2,6 +2,34 @@
 title: "Course Materials Handbook"
 ---
 
-This is a Quarto website.
+This handbook is for contributors maintaining teaching material written in
+[Quarto Markdown](https://quarto.org/docs/authoring/markdown-basics.html).
+It collects the workflows shared by course repositories so that individual
+courses only need to document their special cases.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+The usual workflow is:
+
+1. Open the repository and identify its source documents and tasks.
+2. Preview the material locally while editing `.qmd` files.
+3. Render the required learner-facing and answer-bearing outputs.
+4. Commit and push the source changes so the published outputs can be rebuilt.
+
+Quarto projects do not all produce the same result. A project may publish a
+website, notebooks for student work, printable documents, or several variants
+from the same source document.
+
+## Where to begin
+
+- New to the toolchain: start with [What is this handbook for?](content/getting_started/mental_model.qmd),
+  [Installation](content/getting_started/install.qmd), and [Setting up Git](content/getting_started/git.qmd).
+- Ready to change course material: use [Open a course repository](content/getting_started/open_repository.qmd),
+  [Previewing](content/daily_workflow/preview.qmd), and [Editing `.qmd` files](content/authoring/editing-qmd-files.qmd).
+- Working with outputs or infrastructure: see [Student & Instructor versions](content/daily_workflow/student-instructor.versions.qmd),
+  [Notebooks `.ipynb`](content/code_interactive/notebooks.qmd), and
+  [GitHub Pages & Actions](content/maintenance/github-pages.qmd).
+
+::: {.callout-note title="Repository instructions remain authoritative"}
+This handbook explains common patterns. Always check the course repository's
+`README.md` and task configuration before running commands, because task
+arguments, profile names, folders, and output formats vary between projects.
+:::

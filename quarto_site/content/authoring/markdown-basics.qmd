@@ -1,3 +1,83 @@
 ---
 title: Markdown basics
 ---
+
+Quarto source documents use Markdown for text and add support for
+configuration, executable code, callouts, citations, cross-references, and
+other publishing features. The examples below cover frequent course edits;
+see the [Quarto Markdown guide](https://quarto.org/docs/authoring/markdown-basics.html)
+for a full reference.
+
+## Text structure
+
+```markdown
+# Main heading
+## Section heading
+
+This is **important** and this is *emphasized*.
+
+- One item
+- Another item
+
+[Quarto documentation](https://quarto.org/)
+```
+
+## Figures and mathematics
+
+```markdown
+![A descriptive caption](figures/result.png){width=70%}
+
+Inline notation uses $K_M$, while a displayed equation uses:
+
+$$
+v = \frac{V_{\max}[S]}{K_M + [S]}
+$$
+```
+
+Paths are relative to the source document unless the project configures
+otherwise. Preview after adding or moving a figure.
+
+## Displayed code
+
+A normal fenced code block is shown to the reader but is not executed:
+
+````markdown
+```python
+rate = concentration / time
+```
+````
+
+An executable cell has braces around its language and requires a project that
+supports execution:
+
+<pre><code>```&#123;python&#125;
+rate = concentration / time
+rate
+```</code></pre>
+
+## Callouts
+
+Quarto provides callouts for information that should stand out:
+
+```markdown
+::: {.callout-tip}
+Remember to use concentrations in mol/L.
+:::
+```
+
+A custom class such as `.callout-solution` may be meaningful only in a
+repository that supplies the matching extension or filter.
+
+## Front matter
+
+Many documents begin with YAML configuration:
+
+```yaml
+---
+title: "Enzyme kinetics"
+toc: true
+---
+```
+
+Edit front matter carefully: indentation and punctuation affect parsing and
+may prevent rendering if invalid.

@@ -1,3 +1,53 @@
 ---
 title: GitHub Pages & Actions
 ---
+
+Many course repositories publish rendered websites through GitHub Actions and
+GitHub Pages. A contributor changes source locally, pushes a commit, and lets
+the configured workflow reproduce the final build.
+
+## Typical publication flow
+
+```{mermaid}
+flowchart LR
+    A["Push commit to main"] --> B["GitHub Actions workflow"]
+    B --> C["Set up Pixi environment"]
+    C --> D["Run render task"]
+    D --> E["Upload generated site"]
+    E --> F["Deploy GitHub Pages"]
+```
+
+In the existing site projects, the workflow commonly runs on pushes to
+`main`, installs Pixi, executes `pixi run render` or
+`pixi run render-all`, uploads an output directory such as
+`course_notes/_site`, and deploys it to Pages.
+
+## Additional generated products
+
+A project that distributes notebooks may do more than deploy a website. For
+example, a workflow can render learner-facing and answer-bearing notebooks,
+then publish notebooks to a branch used by Google Colab links. Do not assume
+that this behavior exists unless it is configured in the repository.
+
+## Check a published update
+
+After pushing:
+
+1. Open the repository on GitHub and select **Actions**.
+2. Open the workflow run triggered by the commit.
+3. Confirm that the render and deployment jobs succeeded.
+4. Inspect the published page or linked notebook output.
+
+## Investigate failed builds
+
+Common sources of failures are:
+
+- Invalid YAML in front matter or `_quarto*.yml`.
+- Missing or incorrectly referenced images, downloads, or included files.
+- Errors in executable code cells.
+- Dependency or extension changes not reflected in the configured environment.
+- A profile-specific problem visible only in one rendered output.
+
+Reproduce the relevant render locally using the repository's Pixi task, fix
+the source or configuration responsible for the error, then commit and push a
+new build.

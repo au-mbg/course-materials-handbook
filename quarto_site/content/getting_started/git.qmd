@@ -1,3 +1,80 @@
 ---
 title: Setting up Git
 ---
+
+Git tracks changes to source documents and sends approved work to GitHub,
+where many course repositories render and publish automatically.
+
+## Clone and update a repository
+
+Clone using the URL stated in the repository documentation:
+
+```bash
+git clone https://github.com/au-mbg/example-course.git
+cd example-course
+```
+
+Before editing, update your local copy:
+
+```bash
+git pull
+```
+
+Authentication may be configured through GitHub itself or through a
+repository-provided task such as `pixi run github-auth`.
+
+## Record an update
+
+After editing and checking a local preview, inspect the changed files:
+
+```bash
+git status
+git diff
+```
+
+Stage only files that belong to the update, commit them with a short
+description, and push:
+
+```bash
+git add path/to/lesson.qmd path/to/figure.png
+git commit -m "Clarify exercise instructions"
+git push
+```
+
+If the repository publishes through GitHub Actions, the push usually starts a
+fresh render and deployment. Check the Actions tab if the update does not
+appear or the build reports a failure.
+
+## Work in source documents
+
+Prefer editing `.qmd` source documents rather than generated `.html`, `.pdf`,
+or `.ipynb` outputs. Quarto Markdown is readable plain text, so `git diff`
+shows meaningful content changes and conflicts can usually be resolved by
+editing a few lines. Rendered notebooks can contain outputs, metadata, and
+execution state that create noisy or disposable differences.
+
+## Resolve a merge conflict
+
+If another contributor changed the same source while you were working,
+`git pull` may report a conflict. Use `git status` to identify the affected
+files and open them in an editor. A conflict is marked like this:
+
+<pre><code>
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+Your local wording
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;
+Wording from the remote branch
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+</code></pre>
+
+Choose or combine the intended content, remove all marker lines, preview the
+result if it affects rendered material, then record the resolution:
+
+```bash
+git add path/to/lesson.qmd
+git commit -m "Resolve conflict in lesson text"
+git push
+```
+
+Do not resolve conflicts by editing generated output in place when an authored
+`.qmd` source exists.

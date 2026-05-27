@@ -1,3 +1,49 @@
 ---
 title: Pixi tasks
 ---
+
+Pixi tasks are named commands defined by a repository. They hide details such
+as the Quarto working directory, profile arguments, environment selection, or
+pre-render setup.
+
+## Inspect available tasks
+
+Start with the repository documentation, then inspect `pixi.toml` or the
+`[tool.pixi.tasks]` entries in `pyproject.toml`. Run a documented task with:
+
+```bash
+pixi run <task-name>
+```
+
+Some documentation uses the equivalent abbreviation `pixi r <task-name>`.
+
+## Frequent task roles
+
+| Role | Typical task names | Purpose |
+| --- | --- | --- |
+| Local authoring | `preview` | Watch source changes and serve a local preview |
+| Final build | `render`, `render-all` | Produce one or all rendered outputs |
+| Cleanup | `clean` | Remove previously generated material before rebuilding |
+| Setup | `github-auth`, font or package fetch tasks | Provide project-specific prerequisites |
+| Validation | figure, download, or script checks | Detect broken referenced resources |
+
+## Examples of project-specific tasks
+
+The structural biology site defines checks for referenced figures, downloads,
+and PyMOL scripts:
+
+```bash
+pixi run check-figures
+pixi run check-downloads
+pixi run check-pymol-scripts
+```
+
+A notebook-producing project may instead render several profiles and rename or
+copy outputs for use in Colab. Such helpers are not general Quarto commands;
+use them only in the repository where they are configured.
+
+::: {.callout-warning title="Do not infer task arguments"}
+`solution`, `instructor`, and `master` can all name an answer-bearing output
+in different projects. Read the task definition before running a profiled
+build or documenting its results.
+:::

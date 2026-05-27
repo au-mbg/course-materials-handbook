@@ -1,3 +1,56 @@
 ---
 title: Quarto profiles
 ---
+
+Profiles let a Quarto project reuse source documents while changing render
+settings for a particular audience or product.
+
+## Profile files
+
+A base configuration might define shared formats and resources, while profile
+files select output folders and filters:
+
+```yaml
+# _quarto-student.yml
+project:
+  output-dir: _output/student
+
+filters:
+  - filters/strip-solution.lua
+```
+
+```yaml
+# _quarto-instructor.yml
+project:
+  output-dir: _output/instructor
+
+filters:
+  - filters/strip-exercise.lua
+```
+
+The project can then expose a task that passes the chosen profile to Quarto:
+
+```bash
+quarto render --profile student
+```
+
+Contributors generally run the equivalent `pixi run ...` task instead of
+calling Quarto directly.
+
+## Existing naming patterns
+
+Different courses use `exercise`/`solution`, `student`/`instructor`, or
+`student`/`master`. The labels are not interchangeable: use the configured
+profile names and check the output paths associated with them.
+
+## When profiles matter
+
+Render all affected profiles when changing:
+
+- Answer text or instructor guidance.
+- Learner starter code or executable solution cells.
+- Links between variants or shared navigation.
+- Profile-dependent format output such as notebooks or PDFs.
+
+Profile behavior may rely on filters or extensions as well as the YAML file,
+so investigate all configured parts before changing the visibility model.

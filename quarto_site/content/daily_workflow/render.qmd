@@ -1,3 +1,39 @@
 ---
 title: Rendering
 ---
+
+Previewing is for rapid feedback; rendering produces the output intended for
+inspection, distribution, or automated publication.
+
+## Render a project
+
+A repository commonly provides one or both of:
+
+```bash
+pixi run render
+pixi run render-all
+```
+
+`render` often produces one default output. `render-all` commonly builds every
+required profile or format, such as learner-facing and answer-bearing sites,
+notebooks, and PDFs.
+
+## Rendered output is derived material
+
+Quarto writes generated files to project-specific locations such as `_site/`,
+`_output/`, `_student/`, or `_site-combined/`. Inspect these results, but make
+content corrections in the `.qmd` source document, figures, data, or
+configuration that generated them.
+
+## What to render before committing
+
+- For prose or layout edits, render at least the affected site or document.
+- For content hidden or shown by profile, render every relevant profile.
+- For executable material, check that code runs and that notebook/PDF/HTML
+  variants contain the intended output.
+- For changed figures, links, or downloads, run repository-provided validation
+  tasks where available.
+
+In many repositories, GitHub Actions runs the same render task after a push to
+`main`. A successful local render reduces avoidable publishing failures, but
+the published build remains the final verification.

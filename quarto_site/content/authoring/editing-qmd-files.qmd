@@ -1,3 +1,95 @@
 ---
 title: Editing `.qmd` files
 ---
+
+A `.qmd` file is the maintained source document: readable Markdown combined
+with optional YAML configuration and executable cells. Work in source
+documents while a local preview is running whenever possible.
+
+## Front matter and content
+
+The YAML front matter at the top configures the page; normal content follows
+the closing `---`:
+
+```markdown
+---
+title: "Protein structure exercise"
+format: html
+---
+
+## Inspect the structure
+
+Use the downloaded model to answer the questions below.
+```
+
+Change front matter only when the update requires page configuration. Ordinary
+wording, figure, or exercise updates belong in the body.
+
+## Figures
+
+Add a figure using a path relative to the source document:
+
+```markdown
+![Active site residues](media/active-site.png){width=65%}
+```
+
+Quarto can arrange labelled subfigures:
+
+```markdown
+::: {#fig-comparison layout-ncol=2}
+![Before treatment](media/before.png){#fig-before}
+![After treatment](media/after.png){#fig-after}
+
+Comparison of measurements.
+:::
+```
+
+For a small floating illustration, a project may use an HTML-styled div:
+
+```markdown
+::: {style="float: right; margin: 10px; width: 28%;"}
+![Menu location](media/menu.png)
+:::
+```
+
+Always preview figure paths, size, alignment, captions, and accessibility
+text. Some repositories provide a figure-checking task.
+
+## Callouts and reusable content
+
+Use ordinary Quarto callouts for hints or warnings:
+
+```markdown
+::: {.callout-tip}
+Use the same units throughout the calculation.
+:::
+```
+
+Quarto includes can avoid copying a long external code example:
+
+<pre><code>```default
+{{&lt; include scripts/example.pml &gt;}}
+```</code></pre>
+
+Paths remain relative to the current source document unless configured
+otherwise.
+
+## Downloads and custom features
+
+One existing course site provides a custom download-button shortcode:
+
+<pre><code>
+{{&lt; download-button path="../files/example.pml" filename="example.pml" &gt;}}
+</code></pre>
+
+This is extension-dependent syntax, not a built-in requirement for all course
+repositories. Use it only where the repository already configures the
+shortcode, and run its download-link check task if available.
+
+## Authoring loop
+
+1. Run the repository's preview task.
+2. Edit the relevant `.qmd` file and related resources.
+3. Inspect every affected audience/profile and output format.
+4. Render and run any configured content checks.
+5. Review `git diff` before committing.

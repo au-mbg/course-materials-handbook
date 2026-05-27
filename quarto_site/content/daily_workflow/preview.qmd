@@ -1,3 +1,47 @@
 ---
 title: Previewing
 ---
+
+A preview renders the material locally and watches source documents for
+changes. Use it while authoring so problems are found before content is
+committed or published.
+
+## Start with the documented task
+
+Many repositories expose a Pixi task such as:
+
+```bash
+pixi run preview
+```
+
+Run it from the repository root unless the documentation says otherwise. The
+task may set its own working directory and may install dependencies the first
+time it runs.
+
+## Common variants
+
+The task signature depends on the project:
+
+| Project shape | Example command | Meaning |
+| --- | --- | --- |
+| One website | `pixi run preview` | Preview the site's HTML output |
+| Learner-facing and answer-bearing website | `pixi run preview exercise` or `pixi run preview solution` | Select a profile before previewing |
+| Site with student/master profiles | `pixi run preview student` or `pixi run preview master` | Select the repository's terminology |
+| Report or notebook set | `pixi run preview 1 student` | Select a document and profile |
+
+These examples reflect existing course repositories; they are not interchangeable
+commands. Check `README.md`, `pixi.toml`, or `pyproject.toml` for the accepted
+arguments in the repository being edited.
+
+## While previewing
+
+Edit the `.qmd` source document, save it, and reload or wait for the preview to
+update. Check:
+
+- Headings, equations, figures, links, callouts, and downloadable resources.
+- Executable cells or interactive components when the project uses them.
+- Both learner-facing and answer-bearing variants when content visibility may
+  change between them.
+
+Do not edit the HTML emitted in `_site/` or another generated output directory;
+the next preview or render will replace it.

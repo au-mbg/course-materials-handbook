@@ -1,3 +1,109 @@
 ---
 title: Code cells
 ---
+
+Course material may show code for reading, execute code while rendering, or
+produce interactive notebooks. The syntax distinguishes displayed examples
+from executable cells.
+
+## Static code
+
+Use an ordinary fenced block when code should be read or copied but not run by
+Quarto:
+
+````markdown
+```python
+def concentration(amount, volume):
+    return amount / volume
+```
+````
+
+This provides syntax highlighting only, the cell above for example produces the following 
+syntax-highlighted code 
+
+```python
+def concentration(amount, volume):
+    return amount / volume
+```
+
+## Executable Python
+
+### Configuration
+
+In order to include executable Python code in a document the project must have a 
+Python execution engine, this means 
+
+- Having Python declared as a dependency in `pixi.toml`
+- Any packages used by the Python code need to be declared in `pixi.toml`. 
+
+An example with a mimimal dependency set is shown below
+
+```default
+[dependencies]
+quarto = ">=1.9.38,<2"
+python = "==3.12"
+
+[pypi-dependencies]
+jupyter = ">=1.1.1, <2"
+```
+
+Additional packages can be added using 
+
+```default
+pixi add <package-name> --pypi
+```
+
+### Example
+
+When the project is configured with a Python execution engine, braces mark a
+cell for execution:
+
+```{{python}}
+amount = 0.004
+volume = 0.2
+amount / volume
+print(volume)
+```
+
+This code will be executed during rendering, producing highlighted code and output like below 
+
+```{python}
+amount = 0.004
+volume = 0.2
+amount / volume
+print(volume)
+```
+
+Execution behavior, cached outputs, and output formats are controlled by
+document front matter and `_quarto.yml`.
+
+## Learner and answer cells
+
+Some course repositories use filters that act on cell options:
+
+<pre><code>```&#123;python&#125;
+#| exercise: true
+#| eval: false
+result = ...  # learner completes this cell
+```
+
+```&#123;python&#125;
+#| solution: true
+result = 0.004 / 0.2
+result
+```</code></pre>
+
+In a configured learner-facing render, the solution cell may be removed; in
+an answer-bearing render, starter cells may be removed or replaced. These
+options are repository conventions powered by custom filters, not generic
+promises of every Quarto project.
+
+## Verification
+
+When editing executable material, verify that:
+
+- The relevant profile includes the intended cells.
+- Code executes without errors in rendered outputs.
+- A learner-facing cell leaves an appropriate starting point.
+- A generated notebook contains the cells and outputs learners are expected to
+  use.

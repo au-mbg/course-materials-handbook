@@ -1,3 +1,63 @@
 ---
 title: Pixi configuration
 ---
+
+Pixi provides a reproducible command environment for Quarto projects. The
+same declared tasks can be run by contributors locally and by automated
+publishing on GitHub.
+
+## Dependencies and tasks
+
+A minimal project may declare Quarto and tasks in `pixi.toml`:
+
+```toml
+[dependencies]
+quarto = ">=1.8,<2"
+python = "3.12.*"
+
+[tasks.preview]
+cmd = "quarto preview"
+cwd = "course_notes"
+
+[tasks.render]
+cmd = "quarto render"
+cwd = "course_notes"
+```
+
+Some repositories keep equivalent configuration under `[tool.pixi]` in
+`pyproject.toml`.
+
+## Task arguments and profiles
+
+Projects that publish multiple views can accept task arguments:
+
+```toml
+[tasks.preview]
+args = [{ "arg" = "mode", default = "student",
+          choices = ["student", "instructor"] }]
+cmd = "quarto preview --profile {{mode}}"
+cwd = "course"
+```
+
+This is why the command a contributor runs must come from that repository's
+documentation or task manifest: profile labels and defaults differ.
+
+## Supporting tasks
+
+Pixi tasks may also:
+
+- Clean output before a complete render.
+- Fetch fonts or other build prerequisites.
+- Run figure, download, or domain-specific script checks.
+- Authenticate with GitHub.
+- Collect or rename generated notebooks for distribution.
+
+These helpers reflect the needs of an individual project and should not be
+assumed to exist elsewhere.
+
+## Lock files and CI
+
+`pixi.lock` records resolved package versions for repeatable environments.
+GitHub Actions workflows commonly install Pixi and run `pixi run render` or
+`pixi run render-all`, which keeps publishing aligned with the local
+contributor workflow.

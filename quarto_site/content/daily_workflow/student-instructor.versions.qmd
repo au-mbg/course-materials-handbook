@@ -1,3 +1,57 @@
 ---
 title: Student & Instructor versions
 ---
+
+Some teaching materials keep exercises and answers in one source document,
+then render a learner-facing output and an answer-bearing output. This avoids
+maintaining two copies of the same exercise text.
+
+## Names vary by repository
+
+Existing projects use different labels for the same broad distinction:
+
+| Learner-facing label | Answer-bearing label | Example use |
+| --- | --- | --- |
+| `exercise` | `solution` | Website pages containing hidden answer callouts |
+| `student` | `instructor` | Report or notebook outputs |
+| `student` | `master` | Website, notebook, and PDF builds |
+
+Use the labels declared in the repository's task and profile files.
+
+## Content-selection patterns
+
+One website project marks an answer block with a custom solution callout:
+
+```markdown
+::: {.callout-solution}
+Answer text or worked solution.
+:::
+```
+
+Notebook-oriented projects may tag executable cells:
+
+<pre><code>```&#123;python&#125;
+#| solution: true
+print("Answer-bearing calculation")
+```
+
+```&#123;python&#125;
+#| exercise: true
+#| eval: false
+... # Learner starting point
+```</code></pre>
+
+These syntaxes function only when the project's filters, extensions, and
+profiles support them. They are examples of existing patterns, not a
+universal authoring contract.
+
+## Check both views
+
+When editing material affected by visibility rules:
+
+1. Preview or render the learner-facing output and confirm answers are absent
+   while instructions and starter material remain usable.
+2. Preview or render the answer-bearing output and confirm worked solutions,
+   code, and any instructor-specific guidance are visible.
+3. Keep shared statements outside filtered blocks unless the text genuinely
+   differs between audiences.

@@ -1,3 +1,46 @@
 ---
 title: Notebooks `.ipynb`
 ---
+
+Quarto source documents can render to notebooks as well as web pages and
+printable documents. This supports learner experimentation without making
+`.ipynb` files the primary authored format.
+
+## Source and outputs
+
+A notebook-producing project can maintain:
+
+```text
+exercise.qmd  ->  exercise.html
+              ->  exercise.pdf
+              ->  exercise.ipynb
+```
+
+The `.qmd` source remains canonical. Make wording, cell, and solution changes
+there, then regenerate the rendered output.
+
+## Existing project patterns
+
+The laboratory-report materials in `molecular_biology_I` render selected
+reports in `student` and `instructor` profiles to HTML, PDF, and notebook
+outputs. Their README links to generated notebooks and to Google Colab.
+
+The `fysisk_biokemi` material similarly builds `student` and `master`
+variants, and its publication workflow copies generated notebooks to a branch
+used for Colab links.
+
+These repositories illustrate a reusable model:
+
+1. Author one `.qmd` document with executable material.
+2. Apply profile-specific filtering where required.
+3. Render distributable formats.
+4. Link learners to the appropriate notebook or Colab location.
+
+## Editing and testing notebook material
+
+- Do not make lasting course-content updates directly in a generated
+  `.ipynb`; regenerate it from `.qmd`.
+- Check starter cells and answer cells in each relevant profile.
+- Execute or render the document to catch code errors and missing dependencies.
+- Verify Colab-facing output after changes affecting paths, imports, datasets,
+  or required packages.

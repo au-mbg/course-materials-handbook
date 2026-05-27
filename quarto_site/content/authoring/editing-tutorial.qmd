@@ -1,3 +1,93 @@
 ---
 title: Editing tutorial
 ---
+
+This walkthrough applies to most course repositories. Replace paths and task
+arguments with the names documented by the repository you are editing.
+
+## 1. Find the source document
+
+After cloning and opening the repository, read `README.md` and the Pixi task
+configuration. Locate the `.qmd` lesson or exercise that contains the text you
+need to alter; do not begin from a generated HTML page, PDF, or notebook.
+
+## 2. Preview before changing content
+
+For a simple site:
+
+```bash
+pixi run preview
+```
+
+If the repository uses profiles, choose the view that is most relevant to the
+edit, for example:
+
+```bash
+pixi run preview student
+```
+
+Open the served page and confirm you have found the correct source document.
+
+## 3. Make a small source edit
+
+Update explanatory text and add one supported visual element, for example a
+hint callout:
+
+```markdown
+::: {.callout-tip}
+Check the units before inserting values into the equation.
+:::
+```
+
+Alternatively, add a figure or amend a code block already used in that
+repository. Save the `.qmd` file and confirm the preview now shows the desired
+change.
+
+## 4. Check project variants
+
+If the changed page can differ between learner-facing and answer-bearing
+outputs, preview the second variant as well:
+
+```bash
+pixi run preview instructor
+```
+
+The profile names may instead be `exercise`/`solution` or
+`student`/`master`. For a notebook/report project, also check the selected
+exercise or report document and the rendered notebook or PDF when applicable.
+
+## 5. Render and review changes
+
+Run the build task required by the repository:
+
+```bash
+pixi run render
+```
+
+or, when all variants must be generated:
+
+```bash
+pixi run render-all
+```
+
+Then inspect the authored changes:
+
+```bash
+git status
+git diff
+```
+
+Rendered output can be checked visually, but commit the source document and
+intentionally changed resources or configuration, following the repository's
+policy for generated files.
+
+## 6. Commit when the result is correct
+
+```bash
+git add path/to/lesson.qmd
+git commit -m "Clarify unit calculation exercise"
+git push
+```
+
+After pushing, check the GitHub Actions build where the course publishes
+automatically.
