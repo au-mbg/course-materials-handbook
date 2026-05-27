@@ -8,10 +8,42 @@ website:
     contents:
       - href: index.qmd
         text: Home
-      
-  margin-header: | 
-    ![](assets/aulogo_uk_var2_blue.png)
-  favicon: assets/aulogo_uk_var2_blue.png
+      - section: "Getting Started"        
+        contents:
+          - content/getting_started/mental_model.qmd
+          - content/getting_started/install.qmd
+          - content/getting_started/git.qmd
+          - content/getting_started/open_repository.qmd
+
+      - section: "Daily workflow"
+        contents:
+          - content/daily_workflow/preview.qmd
+          - content/daily_workflow/render.qmd
+          - content/daily_workflow/pixi-tasks.qmd
+          - content/daily_workflow/student-instructor.versions.qmd
+
+      - section: "Authoring"
+        contents:
+          - content/authoring/layout.qmd
+          - content/authoring/markdown-basics.qmd
+          - content/authoring/editing-qmd-files.qmd
+          - content/authoring/editing-tutorial.qmd
+
+      - section: "Code & Interactivity"
+        contents:
+          - content/code_interactive/python-code-cells.qmd
+          - content/code_interactive/quarto-live-pyodide.qmd
+          - content/code_interactive/notebooks.qmd
+
+      - section: "Maintenance & Advanced Topics"
+        contents:
+          - content/maintenance/quarto-configuration.qmd
+          - content/maintenance/pixi-configuration.qmd
+          - content/maintenance/quarto-extensions.qmd
+          - content/maintenance/profiles.qmd
+          - content/maintenance/github-pages.qmd
+
+  favicon: content/assets/aulogo_uk_var2_blue.png
 
 format:
   html:
