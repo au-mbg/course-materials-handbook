@@ -1,5 +1,12 @@
 ---
 title: Notebooks `.ipynb`
+
+format: 
+  ipynb: default
+  html: default
+
+format-links: 
+  - ipynb
 ---
 
 Quarto source documents can render to notebooks as well as web pages and
