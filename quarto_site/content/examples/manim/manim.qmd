@@ -770,6 +770,453 @@ video.display()
 
 :::
 
+### Biological example: Plasmid fragments
+
+The following shows another biological inspired animation - showcasing the modular arithmetic of calculating fragment
+sizes of a circular plasmid. 
+
+::: {.panel-tabset}
+
+## Animation
+
+```{python}
+#| echo: false
+from manim import *
+from IPython.utils.capture import capture_output
+
+config.media_width = "100%"
+config.media_embed = True
+
+class CircularPlasmidFragments(Scene):
+    def construct(self):
+        self.camera.background_color = "#101820"
+
+        plasmid_size = 2999
+        sites = [
+            ("EcoRI", 53, BLUE_C),
+            ("DraI", 1168, GREEN_C),
+            ("DraI", 1187, GREEN_C),
+            ("DraI", 1879, GREEN_C),
+        ]
+        fragments = [
+            ("EcoRI 53", "DraI 1168", 1115, BLUE_C),
+            ("DraI 1168", "DraI 1187", 19, TEAL_C),
+            ("DraI 1187", "DraI 1879", 692, PURPLE_C),
+            ("DraI 1879", "EcoRI 53", 1173, ORANGE),
+        ]
+
+        radius = 2.05
+        map_shift = LEFT * 2.35 + DOWN * 0.15
+
+        def bp_angle(position):
+            return PI / 2 - TAU * (position / plasmid_size)
+
+        def bp_point(position, r=radius):
+            angle = bp_angle(position)
+            return np.array([r * np.cos(angle), r * np.sin(angle), 0])
+
+        def clockwise_arc(start, end, color, stroke_width=12, r=radius + 0.12):
+            distance = (end - start) % plasmid_size
+            arc = Arc(
+                radius=r,
+                start_angle=bp_angle(start),
+                angle=-TAU * distance / plasmid_size,
+                color=color,
+                stroke_width=stroke_width,
+            )
+            arc.shift(map_shift)
+            return arc
+
+        def clockwise_arc_distance(start, distance, color, stroke_width=12, r=radius + 0.12):
+            arc = Arc(
+                radius=r,
+                start_angle=bp_angle(start),
+                angle=-TAU * distance / plasmid_size,
+                color=color,
+                stroke_width=stroke_width,
+            )
+            arc.shift(map_shift)
+            return arc
+
+        intro_title = Text("Circular plasmid fragments", font_size=44, weight=BOLD)
+        intro_subtitle = Text(
+            "pSP64 is 2999 bp, so the map does not have a true end",
+            font_size=26,
+            color=GRAY_B,
+        )
+        intro_circle = Circle(radius=1.0, color=YELLOW_C, stroke_width=6)
+        intro_cut_a = Line(UP * 0.8, UP * 1.25, color=BLUE_C, stroke_width=8)
+        intro_cut_b = Line(DOWN * 0.8, DOWN * 1.25, color=GREEN_C, stroke_width=8)
+        intro_map = VGroup(intro_circle, intro_cut_a, intro_cut_b)
+        title_card = VGroup(intro_title, intro_subtitle, intro_map)
+        title_card.arrange(DOWN, buff=0.42)
+        self.add(title_card)
+        self.wait(1.0)
+
+        title = Text("EcoRI + DraI digest of pSP64", font_size=36, weight=BOLD)
+        title.to_edge(UP)
+
+        circle = Circle(radius=radius, color="#f0e98a", stroke_width=5)
+        inner_circle = Circle(radius=radius - 0.08, color="#d5ce73", stroke_width=2)
+        plasmid_label = VGroup(
+            Text("pSP64", font_size=42, weight=BOLD),
+            Text("2999 bp", font_size=27, color=GRAY_A),
+        )
+        plasmid_label.arrange(DOWN, buff=0.12)
+
+        site_mobjects = VGroup()
+        for enzyme, position, color in sites:
+            point = bp_point(position)
+            tick = Line(
+                bp_point(position, radius - 0.18),
+                bp_point(position, radius + 0.26),
+                color=color,
+                stroke_width=7,
+            )
+            dot = Dot(point, radius=0.06, color=color)
+            label = Text(f"{enzyme} ({position})", font_size=20, color=color)
+            label.move_to(bp_point(position, radius + 0.72))
+            if position in [1168, 1187]:
+                label.shift(RIGHT * 0.35 + DOWN * (0.22 if position == 1187 else -0.04))
+            site_mobjects.add(VGroup(tick, dot, label))
+
+        map_group = VGroup(circle, inner_circle, plasmid_label, site_mobjects)
+        map_group.shift(map_shift)
+
+        key = VGroup(
+            Text("Read from one cut site", font_size=25, color=GRAY_A),
+            Text("clockwise to the next cut site", font_size=25, color=GRAY_A),
+        )
+        key.arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+        key.move_to(RIGHT * 3.0 + UP * 1.2)
+
+        self.play(
+            ReplacementTransform(intro_title, title),
+            FadeOut(intro_subtitle),
+            FadeOut(intro_map),
+            run_time=0.7,
+        )
+        self.play(Create(circle), Create(inner_circle), FadeIn(plasmid_label))
+        self.play(LaggedStart(*[FadeIn(site) for site in site_mobjects], lag_ratio=0.12))
+        self.play(FadeIn(key))
+        self.wait(0.4)
+
+        fragment_text = Text("", font_size=1)
+        previous_arc = None
+
+        examples = [
+            (53, 1168, "1168 - 53 = 1115 bp", BLUE_C),
+            (1168, 1187, "1187 - 1168 = 19 bp", TEAL_C),
+            (1187, 1879, "1879 - 1187 = 692 bp", PURPLE_C),
+        ]
+
+        for start, end, calculation, color in examples:
+            arc = clockwise_arc(start, end, color)
+            text = Text(calculation, font_size=28, color=color)
+            text.move_to(RIGHT * 3.0 + DOWN * 0.25)
+
+            if previous_arc is None:
+                self.play(Create(arc), FadeIn(text), run_time=0.8)
+            else:
+                self.play(ReplacementTransform(previous_arc, arc), ReplacementTransform(fragment_text, text))
+            self.wait(0.8)
+            previous_arc = arc
+            fragment_text = text
+
+        wrap_to_end = clockwise_arc_distance(1879, plasmid_size - 1879, ORANGE)
+        wrap_from_start = clockwise_arc_distance(0, 53, YELLOW_D)
+        wrap_arcs = VGroup(wrap_to_end, wrap_from_start)
+        wrap_steps = VGroup(
+            Text("The last fragment crosses the numbering break", font_size=24, color=GRAY_A),
+            Text("2999 - 1879 = 1120 bp", font_size=27, color=ORANGE),
+            Text("then continue from 1 to 53", font_size=24, color=YELLOW_D),
+            Text("1120 + 53 = 1173 bp", font_size=31, color=ORANGE),
+        )
+        wrap_steps.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        wrap_steps.move_to(RIGHT * 3.05 + DOWN * 0.18)
+
+        self.play(
+            ReplacementTransform(previous_arc, wrap_to_end),
+            FadeOut(fragment_text),
+            FadeIn(wrap_steps[0]),
+            FadeIn(wrap_steps[1]),
+        )
+        self.play(Create(wrap_from_start), FadeIn(wrap_steps[2]), FadeIn(wrap_steps[3]))
+        self.wait(1.3)
+
+        fragment_bars = VGroup()
+        max_fragment = max(fragment[2] for fragment in fragments)
+        for _left_label, _right_label, size, color in fragments:
+            width = 3.35 * size / max_fragment
+            bar = Rectangle(
+                width=width,
+                height=0.28,
+                fill_color=color,
+                fill_opacity=0.9,
+                stroke_width=0,
+            )
+            label = Text(f"{size} bp", font_size=22, color=WHITE)
+            label.next_to(bar, RIGHT, buff=0.16)
+            fragment_bars.add(VGroup(bar, label))
+
+        fragment_bars.arrange(DOWN, aligned_edge=RIGHT, buff=0.22)
+        fragment_heading = Text("Fragments in order around the circle", font_size=22, color=GRAY_A)
+        fragment_summary = VGroup(fragment_heading, fragment_bars)
+        fragment_summary.arrange(DOWN, aligned_edge=LEFT, buff=0.28)
+        fragment_summary.move_to(RIGHT * 2.65 + DOWN * 0.1)
+        final_note = Text(
+            "The fragment sizes add back to 2999 bp",
+            font_size=25,
+            color=GRAY_A,
+        )
+        final_note.next_to(fragment_summary, DOWN, buff=0.35)
+
+        self.play(
+            FadeOut(key),
+            FadeOut(wrap_steps),
+            FadeOut(wrap_arcs),
+            FadeIn(fragment_summary),
+            FadeIn(final_note),
+        )
+        self.wait(1.2)
+
+
+with capture_output() as captured:
+    get_ipython().run_line_magic(
+        "manim",
+        "-ql -v WARNING --progress_bar None CircularPlasmidFragments",
+    )
+
+video = captured.outputs[-1]
+video.data["text/html"] = (
+    video.data["text/html"]
+    .replace(" autoplay", "")
+    .replace(" loop", "")
+)
+video.display()
+```
+
+## Code
+
+```python
+from manim import *
+from IPython.utils.capture import capture_output
+
+config.media_width = "100%"
+config.media_embed = True
+
+class CircularPlasmidFragments(Scene):
+    def construct(self):
+        self.camera.background_color = "#101820"
+
+        plasmid_size = 2999
+        sites = [
+            ("EcoRI", 53, BLUE_C),
+            ("DraI", 1168, GREEN_C),
+            ("DraI", 1187, GREEN_C),
+            ("DraI", 1879, GREEN_C),
+        ]
+        fragments = [
+            ("EcoRI 53", "DraI 1168", 1115, BLUE_C),
+            ("DraI 1168", "DraI 1187", 19, TEAL_C),
+            ("DraI 1187", "DraI 1879", 692, PURPLE_C),
+            ("DraI 1879", "EcoRI 53", 1173, ORANGE),
+        ]
+
+        radius = 2.05
+        map_shift = LEFT * 2.35 + DOWN * 0.15
+
+        def bp_angle(position):
+            return PI / 2 - TAU * (position / plasmid_size)
+
+        def bp_point(position, r=radius):
+            angle = bp_angle(position)
+            return np.array([r * np.cos(angle), r * np.sin(angle), 0])
+
+        def clockwise_arc(start, end, color, stroke_width=12, r=radius + 0.12):
+            distance = (end - start) % plasmid_size
+            arc = Arc(
+                radius=r,
+                start_angle=bp_angle(start),
+                angle=-TAU * distance / plasmid_size,
+                color=color,
+                stroke_width=stroke_width,
+            )
+            arc.shift(map_shift)
+            return arc
+
+        def clockwise_arc_distance(start, distance, color, stroke_width=12, r=radius + 0.12):
+            arc = Arc(
+                radius=r,
+                start_angle=bp_angle(start),
+                angle=-TAU * distance / plasmid_size,
+                color=color,
+                stroke_width=stroke_width,
+            )
+            arc.shift(map_shift)
+            return arc
+
+        intro_title = Text("Circular plasmid fragments", font_size=44, weight=BOLD)
+        intro_subtitle = Text(
+            "pSP64 is 2999 bp, so the map does not have a true end",
+            font_size=26,
+            color=GRAY_B,
+        )
+        intro_circle = Circle(radius=1.0, color=YELLOW_C, stroke_width=6)
+        intro_cut_a = Line(UP * 0.8, UP * 1.25, color=BLUE_C, stroke_width=8)
+        intro_cut_b = Line(DOWN * 0.8, DOWN * 1.25, color=GREEN_C, stroke_width=8)
+        intro_map = VGroup(intro_circle, intro_cut_a, intro_cut_b)
+        title_card = VGroup(intro_title, intro_subtitle, intro_map)
+        title_card.arrange(DOWN, buff=0.42)
+        self.add(title_card)
+        self.wait(1.0)
+
+        title = Text("EcoRI + DraI digest of pSP64", font_size=36, weight=BOLD)
+        title.to_edge(UP)
+
+        circle = Circle(radius=radius, color="#f0e98a", stroke_width=5)
+        inner_circle = Circle(radius=radius - 0.08, color="#d5ce73", stroke_width=2)
+        plasmid_label = VGroup(
+            Text("pSP64", font_size=42, weight=BOLD),
+            Text("2999 bp", font_size=27, color=GRAY_A),
+        )
+        plasmid_label.arrange(DOWN, buff=0.12)
+
+        site_mobjects = VGroup()
+        for enzyme, position, color in sites:
+            point = bp_point(position)
+            tick = Line(
+                bp_point(position, radius - 0.18),
+                bp_point(position, radius + 0.26),
+                color=color,
+                stroke_width=7,
+            )
+            dot = Dot(point, radius=0.06, color=color)
+            label = Text(f"{enzyme} ({position})", font_size=20, color=color)
+            label.move_to(bp_point(position, radius + 0.72))
+            if position in [1168, 1187]:
+                label.shift(RIGHT * 0.35 + DOWN * (0.22 if position == 1187 else -0.04))
+            site_mobjects.add(VGroup(tick, dot, label))
+
+        map_group = VGroup(circle, inner_circle, plasmid_label, site_mobjects)
+        map_group.shift(map_shift)
+
+        key = VGroup(
+            Text("Read from one cut site", font_size=25, color=GRAY_A),
+            Text("clockwise to the next cut site", font_size=25, color=GRAY_A),
+        )
+        key.arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+        key.move_to(RIGHT * 3.0 + UP * 1.2)
+
+        self.play(
+            ReplacementTransform(intro_title, title),
+            FadeOut(intro_subtitle),
+            FadeOut(intro_map),
+            run_time=0.7,
+        )
+        self.play(Create(circle), Create(inner_circle), FadeIn(plasmid_label))
+        self.play(LaggedStart(*[FadeIn(site) for site in site_mobjects], lag_ratio=0.12))
+        self.play(FadeIn(key))
+        self.wait(0.4)
+
+        fragment_text = Text("", font_size=1)
+        previous_arc = None
+
+        examples = [
+            (53, 1168, "1168 - 53 = 1115 bp", BLUE_C),
+            (1168, 1187, "1187 - 1168 = 19 bp", TEAL_C),
+            (1187, 1879, "1879 - 1187 = 692 bp", PURPLE_C),
+        ]
+
+        for start, end, calculation, color in examples:
+            arc = clockwise_arc(start, end, color)
+            text = Text(calculation, font_size=28, color=color)
+            text.move_to(RIGHT * 3.0 + DOWN * 0.25)
+
+            if previous_arc is None:
+                self.play(Create(arc), FadeIn(text), run_time=0.8)
+            else:
+                self.play(ReplacementTransform(previous_arc, arc), ReplacementTransform(fragment_text, text))
+            self.wait(0.8)
+            previous_arc = arc
+            fragment_text = text
+
+        wrap_to_end = clockwise_arc_distance(1879, plasmid_size - 1879, ORANGE)
+        wrap_from_start = clockwise_arc_distance(0, 53, YELLOW_D)
+        wrap_arcs = VGroup(wrap_to_end, wrap_from_start)
+        wrap_steps = VGroup(
+            Text("The last fragment crosses the numbering break", font_size=24, color=GRAY_A),
+            Text("2999 - 1879 = 1120 bp", font_size=27, color=ORANGE),
+            Text("then continue from 1 to 53", font_size=24, color=YELLOW_D),
+            Text("1120 + 53 = 1173 bp", font_size=31, color=ORANGE),
+        )
+        wrap_steps.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+        wrap_steps.move_to(RIGHT * 3.05 + DOWN * 0.18)
+
+        self.play(
+            ReplacementTransform(previous_arc, wrap_to_end),
+            FadeOut(fragment_text),
+            FadeIn(wrap_steps[0]),
+            FadeIn(wrap_steps[1]),
+        )
+        self.play(Create(wrap_from_start), FadeIn(wrap_steps[2]), FadeIn(wrap_steps[3]))
+        self.wait(1.3)
+
+        fragment_bars = VGroup()
+        max_fragment = max(fragment[2] for fragment in fragments)
+        for _left_label, _right_label, size, color in fragments:
+            width = 3.35 * size / max_fragment
+            bar = Rectangle(
+                width=width,
+                height=0.28,
+                fill_color=color,
+                fill_opacity=0.9,
+                stroke_width=0,
+            )
+            label = Text(f"{size} bp", font_size=22, color=WHITE)
+            label.next_to(bar, RIGHT, buff=0.16)
+            fragment_bars.add(VGroup(bar, label))
+
+        fragment_bars.arrange(DOWN, aligned_edge=RIGHT, buff=0.22)
+        fragment_heading = Text("Fragments in order around the circle", font_size=22, color=GRAY_A)
+        fragment_summary = VGroup(fragment_heading, fragment_bars)
+        fragment_summary.arrange(DOWN, aligned_edge=LEFT, buff=0.28)
+        fragment_summary.move_to(RIGHT * 2.65 + DOWN * 0.1)
+        final_note = Text(
+            "The fragment sizes add back to 2999 bp",
+            font_size=25,
+            color=GRAY_A,
+        )
+        final_note.next_to(fragment_summary, DOWN, buff=0.35)
+
+        self.play(
+            FadeOut(key),
+            FadeOut(wrap_steps),
+            FadeOut(wrap_arcs),
+            FadeIn(fragment_summary),
+            FadeIn(final_note),
+        )
+        self.wait(1.2)
+
+
+with capture_output() as captured:
+    get_ipython().run_line_magic(
+        "manim",
+        "-qh -v WARNING --progress_bar None CircularPlasmidFragments",
+    )
+
+video = captured.outputs[-1]
+video.data["text/html"] = (
+    video.data["text/html"]
+    .replace(" autoplay", "")
+    .replace(" loop", "")
+)
+video.display()
+```
+:::
+
+
+
 
 ## Technical 
 
