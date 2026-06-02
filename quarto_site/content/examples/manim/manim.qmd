@@ -1218,7 +1218,7 @@ video.display()
 
 
 
-## Technical 
+## Technical details
 
 To include `manim` animations the `pixi` environemnt needs to have manim registered as a dependency, 
 if it isn't then it can be added with

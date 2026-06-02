@@ -1,0 +1,28 @@
+---
+title: Molstar (Mol*)
+---
+
+The `Mol*` extension [https://github.com/jmbuhr/quarto-molstar]([https://github.com/jmbuhr/quarto-molstar]) allows including 
+an interactive protein viewer in the a document. 
+
+A protein can be included with the short code
+
+```{.txt shortcodes=false}
+{{< mol-rcsb 7sgl >}}
+```
+
+{{< mol-rcsb 7sgl >}}
+
+In some cases this could be a much more interesting way of seeing a protein compared to still figures. 
+See many more examples [here](https://jmbuhr.de/quarto-molstar/).
+
+## Technical details
+
+Installing the extension is simple, in the Quarto root run 
+
+```
+quarto install extension jmbuhr/quarto-molstar
+```
+
+This will install the extension under `_extensions` and enable the shortcodes. 
+

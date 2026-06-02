@@ -40,6 +40,7 @@ website:
       - section: "Examples & Ideas"
         contents:
           - content/examples/manim/manim.qmd
+          - content/examples/molstar.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:
