@@ -27,7 +27,7 @@ description = "Clean the rendered quarto site"
 [dependencies]
 quarto = ">=1.9.38,<2"
 python = "==3.12"
+manim = ">=0.20.1,<0.21"
 
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"
-manim = ">=0.20.1, <0.21"

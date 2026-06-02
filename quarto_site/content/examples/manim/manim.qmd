@@ -777,7 +777,7 @@ To include `manim` animations the `pixi` environemnt needs to have manim registe
 if it isn't then it can be added with
 
 ```bash
-pixi add manim --pypi 
+pixi add manim
 ```
 
 Then if the `manim` source code should be part of the document we need to enable 
