@@ -24,6 +24,10 @@ jobs:
         with:
           pixi-version: v0.66.0
           cache: true
+      - name: Install TinyTeX
+        run: |
+          pixi run quarto install tinytex --no-prompt
+          echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
       - run: pixi run render
 
       - name: Upload Pages artifact
