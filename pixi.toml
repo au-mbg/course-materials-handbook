@@ -16,6 +16,12 @@ cmd = "quarto render"
 cwd = "quarto_site/"
 description = "Render the quarto site"
 
+
+[tasks.clean]
+cmd = "rm -rf _site"
+cwd = "quarto_site/"
+description = "Clean the rendered quarto site"
+
 [tasks]
 
 [dependencies]
@@ -24,3 +30,4 @@ python = "==3.12"
 
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"
+manim = ">=0.20.1, <0.21"

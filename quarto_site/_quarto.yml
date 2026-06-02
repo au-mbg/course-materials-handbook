@@ -37,6 +37,10 @@ website:
           - content/code_interactive/quarto-live-pyodide.qmd
           - content/code_interactive/notebooks.qmd
 
+      - section: "Examples & Ideas"
+        contents:
+          - content/examples/manim/manim.qmd
+
       - section: "Maintenance & Advanced Topics"
         contents:
           - content/maintenance/quarto-configuration.qmd

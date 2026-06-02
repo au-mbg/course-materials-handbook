@@ -5,6 +5,9 @@
 # Quarto
 .quarto/
 _site/
+*.quarto_ipynb*
+quarto_site/content/examples/manim/media/
 
 # Stuff
 .DS_Store
+dev/
