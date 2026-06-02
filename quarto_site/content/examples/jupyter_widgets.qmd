@@ -1,0 +1,114 @@
+---
+title: Jupyter Widgets
+---
+
+Various libraries can output JavaScript enabled figures/widgets that can be embedded in Quarto documents. 
+
+::: {.callout-warning title="What can Jupyter widgets be used for?"}
+Jupyter widgets can be used to add interactive figures and visual elements to course pages. For example, students can zoom into plots, hover over data points, rotate 3D models, inspect tables, move through animations, or explore maps directly in the browser.
+
+This works especially well when the interactivity is built into the visual element itself, such as a Plotly figure, an interactive table, or a molecular viewer. In other words, widgets are useful when students should **explore an already prepared result**.
+
+For activities where students need to change inputs and have Python recalculate the result, tools such as ShinyLive or Pyodide-based exercises are usually a better fit.
+:::
+
+## Examples 
+
+### Plotly example
+
+The `plotly` code below creates an interactive figure for the iris dataset. 
+
+```{python}
+import plotly.express as px
+import plotly.io as pio
+df = px.data.iris()
+fig = px.scatter(df, x="sepal_width", y="sepal_length", 
+                 color="species", 
+                 marginal_y="violin", marginal_x="box", 
+                 trendline="ols", template="simple_white")
+fig.show()
+```
+
+### Altair example
+
+This Altair example shows linked interactivity between two plots. The scatter plot 
+compares horsepower and fuel efficiency for different cars, while the bar chart summarizes
+the cars by region of origin.
+
+Drag over points in the scatter plot to select a subset of cars. The bar chart updates
+automatically to show the origin of the selected cars. This works directly in the browser
+after the page has been rendered.
+```{python}
+#| fig-align: center
+#| code-fold: true
+import altair as alt
+from vega_datasets import data
+
+source = data.cars()
+
+brush = alt.selection_interval()
+
+points = (
+    alt.Chart(source)
+    .mark_point()
+    .encode(
+        x="Horsepower:Q",
+        y="Miles_per_Gallon:Q",
+        color=alt.condition(brush, "Origin:N", alt.value("lightgray")),
+        tooltip=["Name:N", "Origin:N", "Horsepower:Q", "Miles_per_Gallon:Q"],
+    )
+    .add_params(brush)
+    .properties(width=600, height=300)
+)
+
+bars = (
+    alt.Chart(source)
+    .mark_bar()
+    .encode(
+        x="count()",
+        y="Origin:N",
+        color="Origin:N",
+    )
+    .transform_filter(brush)
+    .properties(width=600, height=300)
+)
+
+points & bars
+```
+
+### py3Dmol example
+
+```{python}
+import py3Dmol
+
+pdb = """
+ATOM      1  N   ALA A   1      -0.525   1.363   0.000  1.00  0.00           N
+ATOM      2  CA  ALA A   1       0.000   0.000   0.000  1.00  0.00           C
+ATOM      3  C   ALA A   1       1.520   0.000   0.000  1.00  0.00           C
+ATOM      4  O   ALA A   1       2.100   1.050   0.000  1.00  0.00           O
+END
+"""
+
+view = py3Dmol.view(width=500, height=350)
+view.addModel(pdb, "pdb")
+view.setStyle({"stick": {}})
+view.zoomTo()
+view.show()
+```
+
+## What “interactive” means here
+
+In a static Quarto website, Jupyter widget output is embedded into the rendered HTML page. 
+The interactive parts that continue to work are the parts handled by JavaScript in the browser.
+
+This means that widgets are well suited for:
+
+- zooming, panning, hovering, and selecting data points;
+- rotating or inspecting 3D visualizations;
+- exploring precomputed animations or states;
+- sorting, filtering, or inspecting prepared tables.
+
+They are less suitable for interactions that require calling Python again after the page has been rendered. 
+For example, a slider that changes a parameter and then asks Python to recompute a simulation 
+usually requires a live Python backend. In this course material setup, that kind of activity 
+is better implemented using ShinyLive, Pyodide/quarto-live, or another browser-based Python approach.

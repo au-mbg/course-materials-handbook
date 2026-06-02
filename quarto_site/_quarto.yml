@@ -42,6 +42,7 @@ website:
           - content/examples/manim/manim.qmd
           - content/examples/molstar.qmd
           - content/examples/shiny.qmd
+          - content/examples/jupyter_widgets.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:
@@ -62,5 +63,6 @@ format:
     toc: true
     mainfont: "inter, sans-serif"
     monofont: "JetBrains Mono, monospace"
+    code-fold: show
 
 
