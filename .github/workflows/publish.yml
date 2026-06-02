@@ -27,7 +27,10 @@ jobs:
       - name: Install TinyTeX
         run: |
           pixi run quarto install tinytex --no-prompt
-          echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
+          TINYTEX_BIN="$HOME/.TinyTeX/bin/x86_64-linux"
+          echo "$TINYTEX_BIN" >> "$GITHUB_PATH"
+          export PATH="$TINYTEX_BIN:$PATH"
+          tlmgr install dvisvgm standalone preview
       - run: pixi run render
 
       - name: Upload Pages artifact
