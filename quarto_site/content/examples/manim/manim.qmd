@@ -780,6 +780,15 @@ if it isn't then it can be added with
 pixi add manim
 ```
 
+Additionally we need to make sure a LaTeX installation is available, this can be done using this task 
+
+```default
+[tasks.install-tinytex]
+cmd = "quarto install tinytex --no-prompt && export PATH=\"$HOME/.TinyTeX/bin/x86_64-linux:$PATH\" && tlmgr install dvisvgm standalone preview"
+description = "Install TinyTeX and Manim TeX dependencies for CI"
+```
+Which can be added to `pixi.toml` and run using `pixi r install-tinytex`. 
+
 Then if the `manim` source code should be part of the document we need to enable 
 the `manim` Jupyter interface, this is done by having a cell like 
 
@@ -798,5 +807,19 @@ the Quarto shortcode
 {{{< video path/to/video.mp4 >}}}
 ```
 If a project includes many animations this is probably preferable to keep rendering time down.
+
+### CI 
+
+If the animations are rendered as part of the CI the workflow should ensure that the LaTeX environemnt is installed, 
+this can be done by adding the following to the `.yml`-file (e.g. `publish.yml`).
+
+```default
+- name: Install TinyTeX
+run: |
+    pixi run install-tinytex
+    echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
+```
+
+
 
 
