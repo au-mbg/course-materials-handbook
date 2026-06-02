@@ -1,0 +1,310 @@
+---
+title: Shiny Widgets
+filters:
+  - shinylive
+---
+
+[Shiny for Python](https://shiny.posit.co/py/) and the [shinylive](https://github.com/quarto-ext/shinylive) Quarto extension 
+enable creating apps that run in the browser embedded directly into the Quarto document. 
+
+## Examples
+
+### Minimal example
+
+Below is a minimal widget with just a slider that controls a small calculation.
+
+```{shinylive-python}
+#| standalone: true
+from shiny import *
+
+app_ui = ui.page_fluid(
+    ui.input_slider("n", "N", 0, 100, 40),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @output
+    @render.text
+    def txt():
+        return f"The value of n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+
+The code for this app is 
+
+````python
+```{shinylive-python}
+#| standalone: true
+from shiny import *
+
+app_ui = ui.page_fluid(
+    ui.input_slider("n", "N", 0, 100, 40),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @output
+    @render.text
+    def txt():
+        return f"The value of n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+````
+
+### Minimal example with editor
+
+The widget below is equivalent to the one above, but here with an interactive editor enabled. This editor can be used to 
+change the code of the widget interactively in the browser.
+
+::: {.column-page-inset-right}
+
+```{shinylive-python}
+#| standalone: true
+#| components: [editor, viewer]
+from shiny import *
+
+app_ui = ui.page_fluid(
+    ui.input_slider("n", "N", 0, 100, 40),
+    ui.output_text_verbatim("txt"),
+)
+
+def server(input, output, session):
+    @output
+    @render.text
+    def txt():
+        return f"The value of n*2 is {input.n() * 2}"
+
+app = App(app_ui, server)
+```
+:::
+
+### Less minimal example
+
+This example is based on the example from the [Shinylive repository](https://github.com/quarto-ext/shinylive/blob/main/index.qmd). 
+The widget lets you control the amplitude $A$, phase $\varphi$ and period $T$ of a sine wave
+
+$$
+s(A, T, \varphi) = A \cdot \sin\left(\frac{2\pi}{T} \cdot \frac{t - \varphi}{2}\right)
+$$
+
+
+::: {.column-page-inset-right}
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 420
+
+
+from shiny import App, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.input_slider("period", "Period", 0.5, 2, 1, step=0.5),
+            ui.input_slider("amplitude", "Amplitude", 0, 2, 1, step=0.25),
+            ui.input_slider("shift", "Phase shift", 0, 2, 0, step=0.1),
+        ),
+        ui.output_plot("plot"),
+    ),
+)
+
+
+def server(input, output, session):
+    @output
+    @render.plot(alt="Sine function")
+    def plot():
+        t = np.arange(0.0, 4.0, 0.01)
+        s = input.amplitude() * np.sin(
+            (2 * np.pi / input.period()) * (t - input.shift() / 2)
+        )
+        fig, ax = plt.subplots()
+        ax.set_ylim([-2, 2])
+        ax.plot(t, s)
+        ax.grid()
+
+
+app = App(app_ui, server)
+```
+:::
+### Biological example: Genetic drift
+
+This widget simulates how the frequency of one neutral trait variant can change from one generation to the next.
+There is no selection or mutation in this model: each new generation is just a random sample from the previous one.
+Smaller populations tend to drift more strongly because random sampling has a larger effect.
+
+::: {.column-page-inset-right}
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 520
+
+from shiny import App, reactive, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.input_slider(
+                "population_size",
+                "Population size",
+                min=20,
+                max=500,
+                value=100,
+                step=10,
+            ),
+            ui.input_slider(
+                "starting_frequency",
+                "Starting frequency",
+                min=0.05,
+                max=0.95,
+                value=0.5,
+                step=0.05,
+            ),
+            ui.input_slider(
+                "generations",
+                "Generations",
+                min=10,
+                max=200,
+                value=50,
+                step=10,
+            ),
+            ui.input_slider(
+                "replicates",
+                "Simulated populations",
+                min=1,
+                max=50,
+                value=20,
+                step=1,
+            ),
+            ui.input_action_button("resimulate", "Resimulate"),
+        ),
+        ui.output_plot("plot"),
+        ui.output_text_verbatim("summary"),
+    ),
+)
+
+
+def simulate_drift(population_size, starting_frequency, generations, replicates, seed):
+    rng = np.random.default_rng(seed)
+    frequencies = np.zeros((replicates, generations + 1))
+    frequencies[:, 0] = starting_frequency
+
+    for generation in range(1, generations + 1):
+        previous = frequencies[:, generation - 1]
+        variant_counts = rng.binomial(population_size, previous)
+        frequencies[:, generation] = variant_counts / population_size
+
+    return frequencies
+
+
+def server(input, output, session):
+    @reactive.calc
+    def trajectories():
+        return simulate_drift(
+            population_size=input.population_size(),
+            starting_frequency=input.starting_frequency(),
+            generations=input.generations(),
+            replicates=input.replicates(),
+            seed=input.resimulate(),
+        )
+
+    @output
+    @render.plot(alt="Genetic drift trajectories")
+    def plot():
+        frequencies = trajectories()
+        generation_axis = np.arange(input.generations() + 1)
+        final_frequencies = frequencies[:, -1]
+        frequency_colors = LinearSegmentedColormap.from_list(
+            "frequency_colors",
+            ["#d95f02", "#acacac", "#1b9e77"],
+        )
+        norm = Normalize(vmin=0, vmax=1)
+
+        fig, ax = plt.subplots(figsize=(1200, 800))
+        for trajectory, final_frequency in zip(frequencies, final_frequencies):
+            ax.plot(
+                generation_axis,
+                trajectory,
+                color=frequency_colors(norm(final_frequency)),
+                alpha=0.75,
+            )
+        ax.axhline(
+            input.starting_frequency(),
+            color="#4d4d4d",
+            linestyle="--",
+            linewidth=1,
+            alpha=0.7,
+        )
+        ax.set(
+            xlabel="Generation",
+            ylabel="Variant frequency",
+            ylim=(-0.02, 1.02),
+            xlim=(0, input.generations()),
+        )
+        ax.grid(alpha=0.25)
+        fig.colorbar(
+            plt.cm.ScalarMappable(norm=norm, cmap=frequency_colors),
+            ax=ax,
+            label="Final variant frequency",
+        )
+
+    @output
+    @render.text
+    def summary():
+        final_frequencies = trajectories()[:, -1]
+        lost = np.sum(final_frequencies == 0)
+        took_over = np.sum(final_frequencies == 1)
+        total = input.replicates()
+
+        return (
+            f"By the final generation, the variant was lost in {lost} of \n"
+            f"{total} simulated populations and took over in {took_over}."
+        )
+
+
+app = App(app_ui, server)
+```
+:::
+
+## Technical Details
+
+To enable the use of Shiny-apps the Shiny-live Quarto extension needs to be installed 
+
+```default
+quarto add quarto-ext/shinylive
+```
+
+And the project needs to have the `shinylive` Python package installed, 
+
+```default
+pixi add shinylive --pypi
+```
+
+Finally, either the document or the project needs to include the filter. For a specific document (`.qmd`-file),
+this is done with 
+
+```default
+---
+title: My ShinyLive enabled page
+filters:
+  - shinylive
+---
+```
+
+Finally, it can be easier to design nice widgets with more screen space than the central 
+column Quarto allocates by default, this can be controlled by wrapping the Shinylive block with a 
+container, like
+
+```default
+::: {.column-page-inset-right}
+
+... Code 
+
+:::
+```
+See [Quarto: Article Layout](https://quarto.org/docs/authoring/article-layout.html) for more examples of containers. 

@@ -41,6 +41,7 @@ website:
         contents:
           - content/examples/manim/manim.qmd
           - content/examples/molstar.qmd
+          - content/examples/shiny.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:

@@ -35,3 +35,4 @@ manim = ">=0.20.1,<0.21"
 
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"
+shinylive = ">=0.8.9, <0.9"
