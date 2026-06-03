@@ -10,7 +10,7 @@ Slides can make use of all the other features of Quarto, such as inclusion of co
 
 ## Examples
 
-### Example slides
+### Minimal slides
 
 This example shows a minimal set of slides.     
 
@@ -69,6 +69,23 @@ This example shows a less minimal deck with fragments, columns, callouts, math, 
 ````
 
 ::::
+
+### Quarto's official demo
+
+These are the demo slides shown in the Quarto documentation. 
+
+```{=html}
+<iframe
+  class="slide-deck"
+  src="https://quarto.org/docs/presentations/revealjs/demo/#/title-slide"
+  title="Quarto demo slides"
+  width="100%"
+  height="600px"
+  allowfullscreen>
+</iframe>
+```
+
+[Open slides in a new tab](https://quarto.org/docs/presentations/revealjs/demo/#/title-slide)
 
 ## Technical details
 
