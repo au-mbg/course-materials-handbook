@@ -1,3 +1,276 @@
 ---
 title: Observable JS
 ---
+
+[Observable JS](https://quarto.org/docs/interactive/ojs/) can be used in Quarto to create
+reactive browser-side figures and controls. This is useful when the data have already
+been prepared, and learners should explore how different choices affect the displayed result.
+
+The example below uses a small prepared table from the
+[`airway`](https://bioconductor.org/packages/release/data/experiment/html/airway.html)
+RNA-seq experiment. The original experiment measured gene expression in human airway
+smooth muscle cells with and without dexamethasone treatment
+([Himes et al. 2014](https://doi.org/10.1371/journal.pone.0099625), GEO `GSE52778`).
+
+Here, the browser does not re-run DESeq2. Instead, Observable JS reacts to the controls
+and filters a prepared differential expression result table.
+
+## Differential expression explorer
+
+Dexamethasone is a synthetic glucocorticoid. In airway cells, glucocorticoids
+can change the transcription of genes involved in inflammation, cell adhesion,
+stress responses, and airway remodeling. RNA-seq gives a readout of these changes
+by counting reads assigned to each gene in treated and untreated samples.
+
+```{mermaid}
+%%| fig-cap: Mermaid diagram of the analysis pipeline. See [diagrams](diagrams.md) for more information on diagrams in Quarto. 
+flowchart LR
+  samples["Airway cells<br/>untreated vs<br/> dexamethasone-treated"]
+  rnaseq["RNA-seq<br/>counts per gene"]
+  table["Prepared results table"]
+  volcano["Interactive volcano plot"]
+
+  samples --> rnaseq
+  rnaseq --> table
+  table --> volcano
+```
+
+Differential expression analysis summarizes each gene with two quantities that
+are useful to explore together:
+
+- `log2FoldChange` describes the size and direction of the expression change.
+  Positive values mean higher expression after dexamethasone treatment.
+- `padj` is the adjusted p-value. Smaller values provide stronger evidence that
+  the observed difference is not just sampling noise.
+
+The volcano plot combines these two summaries. Genes far to the left or right
+have larger expression changes, while genes higher on the plot have stronger
+statistical evidence. The y-axis uses a compressed scale so that very small
+adjusted p-values do not visually dominate the whole plot.
+
+Move the thresholds to change which genes are called differentially expressed.
+Search for a gene symbol or Ensembl ID to narrow the plot and table.
+
+```{ojs}
+//| echo: false
+airway = FileAttachment("data/airway_dex_de_results.csv").csv({typed: true})
+```
+
+```{ojs}
+//| echo: false
+viewof fdrThreshold = Inputs.range([0.001, 0.2], {
+  value: 0.05,
+  step: 0.001,
+  label: "FDR threshold"
+})
+```
+
+```{ojs}
+//| echo: false
+viewof lfcThreshold = Inputs.range([0, 4], {
+  value: 1,
+  step: 0.1,
+  label: "Minimum absolute log2 fold change"
+})
+```
+
+```{ojs}
+//| echo: false
+viewof geneQuery = Inputs.text({
+  label: "Gene search",
+  placeholder: "DUSP1, VCAM1, ENSG..."
+})
+```
+
+```{ojs}
+//| echo: false
+annotated = airway.map((d) => {
+  const significant = d.padj <= fdrThreshold && Math.abs(d.log2FoldChange) >= lfcThreshold;
+  return {
+    ...d,
+    status: significant
+      ? (d.log2FoldChange > 0 ? "Up" : "Down")
+      : "Unchanged",
+    negLog10Padj: -Math.log10(d.padj),
+    plotNegLog10Padj: Math.log10(1 - Math.log10(d.padj))
+  };
+})
+```
+
+```{ojs}
+//| echo: false
+query = geneQuery.trim().toLowerCase()
+```
+
+```{ojs}
+//| echo: false
+plotData = query
+  ? annotated.filter((d) =>
+      `${d.symbol} ${d.gene_id}`.toLowerCase().includes(query)
+    )
+  : annotated
+```
+
+```{ojs}
+//| echo: false
+summary = [
+  {
+    category: "Upregulated",
+    genes: annotated.filter((d) => d.status === "Up").length
+  },
+  {
+    category: "Downregulated",
+    genes: annotated.filter((d) => d.status === "Down").length
+  },
+  {
+    category: "Unchanged in this view",
+    genes: annotated.filter((d) => d.status === "Unchanged").length
+  }
+]
+```
+
+```{ojs}
+//| echo: false
+Inputs.table(summary)
+```
+
+```{ojs}
+//| echo: false
+Plot.plot({
+  height: 430,
+  marginLeft: 60,
+  marginBottom: 50,
+  grid: true,
+  x: {
+    label: "log2 fold change, dexamethasone / untreated"
+  },
+  y: {
+    label: "compressed -log10 adjusted p-value"
+  },
+  color: {
+    domain: ["Up", "Down", "Unchanged"],
+    range: ["#b94141", "#3c6ea8", "#9b9b9b"],
+    legend: true
+  },
+  marks: [
+    Plot.ruleX([0], {stroke: "#666"}),
+    Plot.ruleX([-lfcThreshold, lfcThreshold], {
+      stroke: "#666",
+      strokeDasharray: "4,4"
+    }),
+    Plot.ruleY([Math.log10(1 - Math.log10(fdrThreshold))], {
+      stroke: "#666",
+      strokeDasharray: "4,4"
+    }),
+    Plot.dot(plotData, {
+      x: "log2FoldChange",
+      y: "plotNegLog10Padj",
+      fill: "status",
+      r: (d) => d.status === "Unchanged" ? 2.2 : 3.6,
+      fillOpacity: 0.8,
+      tip: true,
+      title: (d) =>
+        `${d.symbol || d.gene_id}\n${d.gene_id}\nlog2FC: ${d.log2FoldChange.toFixed(2)}\npadj: ${d.padj.toExponential(2)}`
+    })
+  ]
+})
+```
+
+```{ojs}
+//| echo: false
+filteredGenes = plotData
+  .filter((d) => d.status !== "Unchanged")
+  .sort((a, b) => a.padj - b.padj)
+```
+
+```{ojs}
+//| echo: false
+tableRows = filteredGenes.map((d) => ({
+  symbol: d.symbol || "",
+  gene_id: d.gene_id,
+  status: d.status,
+  baseMean: Math.round(d.baseMean),
+  log2FoldChange: d.log2FoldChange.toFixed(2),
+  padj: d.padj.toExponential(2)
+}))
+```
+
+```{ojs}
+//| echo: false
+Inputs.table(tableRows)
+```
+
+Changing the FDR threshold changes how much statistical evidence is required.
+Changing the fold-change threshold changes how large the expression difference
+must be before it is highlighted. Both choices affect the final gene list, which
+is why interactive thresholding is useful for teaching and exploratory analysis.
+The plot caps very small adjusted p-values visually, but the thresholding and
+The plot compresses very small adjusted p-values visually, but the thresholding
+and table still use the original `padj` values.
+
+## When to use OJS
+
+OJS is a good fit when a Quarto page should provide fast, linked interactivity
+over a prepared dataset. The sliders, plot, summary table, and filtered gene table
+above all update in the browser after the page has been rendered.
+
+Use Shiny, Pyodide, or another live execution approach instead when the interaction
+needs to recompute an analysis from raw inputs, run Python or R code, or keep state
+between larger workflows.
+
+## Technical details
+
+OJS cells use the chunk name `{ojs}`. A minimal control can be written like this:
+
+````markdown
+```{ojs}
+viewof cutoff = Inputs.range([0, 1], {
+  value: 0.05,
+  step: 0.01,
+  label: "Cutoff"
+})
+```
+````
+
+Other OJS cells can then use `cutoff` directly. When the slider changes, cells
+that depend on `cutoff` update automatically in the browser.
+
+For a prepared data file stored next to the page, load it with `FileAttachment`:
+
+````markdown
+```{ojs}
+genes = FileAttachment("data/airway_dex_de_results.csv").csv({typed: true})
+```
+````
+
+The `{typed: true}` option asks OJS to parse numeric columns as numbers instead
+of strings.
+
+The interactive example above hides the implementation cells with `echo: false`
+so that only the controls and outputs are shown in the rendered page:
+
+````markdown
+```{ojs}
+//| echo: false
+filtered = genes.filter((d) => d.padj <= cutoff)
+```
+````
+
+For a simple plot, Quarto makes Observable Plot available as `Plot`:
+
+````markdown
+```{ojs}
+Plot.plot({
+  marks: [
+    Plot.dot(genes, {
+      x: "log2FoldChange",
+      y: (d) => -Math.log10(d.padj)
+    })
+  ]
+})
+```
+````
+
+No extra Quarto extension is needed for ordinary OJS cells in an HTML document.
+The data file does need to be available in the rendered site, so keep it in a
+path Quarto copies alongside the page.

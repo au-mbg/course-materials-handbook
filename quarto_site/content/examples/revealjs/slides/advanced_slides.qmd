@@ -1,6 +1,6 @@
 ---
 title: "A richer RevealJS deck"
-subtitle: "Quarto features useful for course material"
+subtitle: "This is the subtitle"
 author: "Course Materials Handbook"
 jupyter: python3
 format:
@@ -16,13 +16,16 @@ format:
     transition: fade
     code-line-numbers: true
     preview-links: auto
+    navigation-mode: grid
 execute:
   echo: true
   warning: false
   message: false
+filters:
+  - shinylive
 ---
 
-## Why use slides in the site?
+# Why use slides in the site?
 
 :::: {.columns}
 
@@ -48,7 +51,7 @@ The website page can link to the deck, embed it in an iframe, and show the sourc
 Use this slide to explain the workflow rather than the syntax. The point is that slides do not need to be maintained as a separate artifact.
 :::
 
-## Fragments
+# Fragments
 
 RevealJS can reveal material step by step.
 
@@ -65,7 +68,7 @@ message = f"{enzyme} works near {temperature} C"
 print(message)
 ```
 
-## Layout
+#
 
 :::: {.columns}
 
@@ -90,21 +93,28 @@ print(message)
 
 ::::
 
-## Math
+# Math
 
-Quarto supports inline and display math in RevealJS output:
+Quarto supports inline and display math in RevealJS output using LaTeX syntax
 
 $$
 P(A \mid B) = \frac{P(B \mid A)P(A)}{P(B)}
 $$
 
-For a course slide, keep the equation visible and use the speaker notes for derivation details.
+```default
+$$
+P(A \mid B) = \frac{P(B \mid A)P(A)}{P(B)}
+$$
+```
+
+
+
 
 ::: notes
 This is a good place to describe the assumptions behind the formula without crowding the slide.
 :::
 
-## Diagrams
+# Diagrams
 
 ```{mermaid}
 flowchart LR
@@ -115,7 +125,7 @@ flowchart LR
   D --> E
 ```
 
-## Executed Python
+# Executed Python
 
 ```{python}
 import numpy as np
@@ -138,13 +148,13 @@ ax.grid(alpha=0.25)
 plt.show()
 ```
 
-## Vertical Slides
+# Vertical Slides
 
 This is the top slide in a vertical stack.
 
 Press down to move into detail slides, or right to continue the main story.
 
-### Detail: authoring
+## Detail: authoring
 
 Vertical slides are useful for optional details:
 
@@ -153,7 +163,7 @@ Vertical slides are useful for optional details:
 - setup notes
 - instructor-only context
 
-### Detail: presenting
+## Detail: presenting
 
 Speaker view still works:
 
@@ -165,25 +175,155 @@ Speaker view still works:
 The exact keyboard shortcuts are RevealJS behavior. Quarto passes speaker notes through to RevealJS.
 :::
 
-## Images and Figures
+# Images and Figures
 
 Quarto figure syntax works in slides too.
 
-```{python}
-import matplotlib.pyplot as plt
+![](https://upload.wikimedia.org/wikipedia/commons/4/4c/DNA_Structure%2BKey%2BLabelled.pn_NoBB.png){fig-align="center"}
 
-labels = ["Read", "Edit", "Render", "Review"]
-values = [2, 4, 3, 2]
-
-fig, ax = plt.subplots(figsize=(6, 3.2))
-ax.bar(labels, values, color=["#2c7fb8", "#7fcdbb", "#fdae61", "#d7191c"])
-ax.set_ylabel("relative effort")
-ax.set_ylim(0, 5)
-ax.spines[["top", "right"]].set_visible(False)
-plt.show()
+```default
+![](https://upload.wikimedia.org/wikipedia/commons/4/4c/DNA_Structure%2BKey%2BLabelled.pn_NoBB.png){fig-align="center"}
 ```
 
-## Takeaways
+# Interactivity 
+
+Slides can use the interactive elements that Quarto offers. 
+
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 520
+
+from shiny import App, reactive, render, ui
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+
+
+app_ui = ui.page_fluid(
+    ui.layout_sidebar(
+        ui.sidebar(
+            ui.input_slider(
+                "population_size",
+                "Population size",
+                min=20,
+                max=500,
+                value=100,
+                step=10,
+            ),
+            ui.input_slider(
+                "starting_frequency",
+                "Starting frequency",
+                min=0.05,
+                max=0.95,
+                value=0.5,
+                step=0.05,
+            ),
+            ui.input_slider(
+                "generations",
+                "Generations",
+                min=10,
+                max=200,
+                value=50,
+                step=10,
+            ),
+            ui.input_slider(
+                "replicates",
+                "Simulated populations",
+                min=1,
+                max=50,
+                value=20,
+                step=1,
+            ),
+            ui.input_action_button("resimulate", "Resimulate"),
+        ),
+        ui.output_plot("plot"),
+        ui.output_text_verbatim("summary"),
+    ),
+)
+
+
+def simulate_drift(population_size, starting_frequency, generations, replicates, seed):
+    rng = np.random.default_rng(seed)
+    frequencies = np.zeros((replicates, generations + 1))
+    frequencies[:, 0] = starting_frequency
+
+    for generation in range(1, generations + 1):
+        previous = frequencies[:, generation - 1]
+        variant_counts = rng.binomial(population_size, previous)
+        frequencies[:, generation] = variant_counts / population_size
+
+    return frequencies
+
+
+def server(input, output, session):
+    @reactive.calc
+    def trajectories():
+        return simulate_drift(
+            population_size=input.population_size(),
+            starting_frequency=input.starting_frequency(),
+            generations=input.generations(),
+            replicates=input.replicates(),
+            seed=input.resimulate(),
+        )
+
+    @output
+    @render.plot(alt="Genetic drift trajectories")
+    def plot():
+        frequencies = trajectories()
+        generation_axis = np.arange(input.generations() + 1)
+        final_frequencies = frequencies[:, -1]
+        frequency_colors = LinearSegmentedColormap.from_list(
+            "frequency_colors",
+            ["#d95f02", "#acacac", "#1b9e77"],
+        )
+        norm = Normalize(vmin=0, vmax=1)
+
+        fig, ax = plt.subplots(figsize=(1200, 800))
+        for trajectory, final_frequency in zip(frequencies, final_frequencies):
+            ax.plot(
+                generation_axis,
+                trajectory,
+                color=frequency_colors(norm(final_frequency)),
+                alpha=0.75,
+            )
+        ax.axhline(
+            input.starting_frequency(),
+            color="#4d4d4d",
+            linestyle="--",
+            linewidth=1,
+            alpha=0.7,
+        )
+        ax.set(
+            xlabel="Generation",
+            ylabel="Variant frequency",
+            ylim=(-0.02, 1.02),
+            xlim=(0, input.generations()),
+        )
+        ax.grid(alpha=0.25)
+        fig.colorbar(
+            plt.cm.ScalarMappable(norm=norm, cmap=frequency_colors),
+            ax=ax,
+            label="Final variant frequency",
+        )
+
+    @output
+    @render.text
+    def summary():
+        final_frequencies = trajectories()[:, -1]
+        lost = np.sum(final_frequencies == 0)
+        took_over = np.sum(final_frequencies == 1)
+        total = input.replicates()
+
+        return (
+            f"By the final generation, the variant was lost in {lost} of \n"
+            f"{total} simulated populations and took over in {took_over}."
+        )
+
+
+app = App(app_ui, server)
+```
+
+# Takeaways
 
 ::: incremental
 1. Put slide sources in the website project.
