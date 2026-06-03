@@ -1,0 +1,75 @@
+---
+title: Slides with reveal.js
+resources:
+  - slides/example_slides.qmd
+  - slides/advanced_slides.qmd
+---
+
+Quarto can also render to [revealjs](https://revealjs.com/) a powerful and convenient presentation format. 
+Slides can make use of all the other features of Quarto, such as inclusion of code, widgets etc. 
+
+## Examples
+
+### Example slides
+
+This example shows a minimal set of slides.     
+
+[Open slides in a new tab](slides/example_slides.html)
+
+:::: {.panel-tabset}
+
+## Slides
+
+```{=html}
+<iframe
+  class="slide-deck"
+  src="slides/example_slides.html"
+  title="Example RevealJS slide deck"
+  width="100%"
+  height="600px"
+  allowfullscreen>
+</iframe>
+``` 
+## Slide `.qmd`
+
+````{python}
+#| eval: false
+{{< include slides/example_slides.qmd >}}
+````
+
+::::
+
+
+### Advanced slides
+
+This example shows a less minimal deck with fragments, columns, callouts, math, Mermaid diagrams, speaker notes, vertical slides, and executed Python cells.
+
+[Open slides in a new tab](slides/advanced_slides.html)
+
+:::: {.panel-tabset}
+
+## Slides
+
+```{=html}
+<iframe
+  class="slide-deck"
+  src="slides/advanced_slides.html"
+  title="Advanced RevealJS slide deck"
+  width="100%"
+  height="600px"
+  allowfullscreen>
+</iframe>
+```
+
+## Slide `.qmd`
+
+````{python}
+#| eval: false
+{{< include slides/advanced_slides.qmd >}}
+````
+
+::::
+
+## Technical details
+
+

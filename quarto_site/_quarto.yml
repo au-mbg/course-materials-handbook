@@ -43,6 +43,9 @@ website:
           - content/examples/molstar.qmd
           - content/examples/shiny.qmd
           - content/examples/jupyter_widgets.qmd
+          - content/examples/observable_js.qmd
+          - content/examples/revealjs/revealjs.qmd
+          - content/examples/diagrams.md
 
       - section: "Maintenance & Advanced Topics"
         contents:

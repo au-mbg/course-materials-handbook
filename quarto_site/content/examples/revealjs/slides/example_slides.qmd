@@ -1,0 +1,25 @@
+---
+title: "Example RevealJS slides"
+format:
+  revealjs:
+    embed-resources: false
+    theme: simple
+---
+
+## A slide written in Quarto
+
+- Slides are written in `.qmd`
+- The output is an HTML RevealJS presentation
+- The same syntax works across course pages and slides
+
+## A code example
+
+```{python}
+#| echo: true
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 2*np.pi, 200)
+plt.plot(x, np.sin(x))
+plt.show()
+```

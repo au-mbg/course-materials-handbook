@@ -1,0 +1,197 @@
+---
+title: "A richer RevealJS deck"
+subtitle: "Quarto features useful for course material"
+author: "Course Materials Handbook"
+jupyter: python3
+format:
+  revealjs:
+    embed-resources: false
+    theme: simple
+    width: 1100
+    height: 700
+    margin: 0.08
+    slide-number: true
+    progress: true
+    hash: true
+    transition: fade
+    code-line-numbers: true
+    preview-links: auto
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Why use slides in the site?
+
+:::: {.columns}
+
+::: {.column width="50%"}
+Course slides can live next to the material they support:
+
+::: incremental
+- the source is ordinary `.qmd`
+- the deck renders to static HTML
+- code, diagrams, math, and notes use familiar Quarto syntax
+:::
+:::
+
+::: {.column width="50%"}
+:::{.callout-tip}
+The website page can link to the deck, embed it in an iframe, and show the source side by side.
+:::
+:::
+
+::::
+
+::: notes
+Use this slide to explain the workflow rather than the syntax. The point is that slides do not need to be maintained as a separate artifact.
+:::
+
+## Fragments
+
+RevealJS can reveal material step by step.
+
+::: incremental
+- Start with the idea.
+- Add the evidence.
+- End with the consequence.
+:::
+
+```{.python code-line-numbers="1|3|5"}
+temperature = 37
+enzyme = "polymerase"
+message = f"{enzyme} works near {temperature} C"
+print(message)
+```
+
+## Layout
+
+:::: {.columns}
+
+::: {.column width="35%"}
+### Left column
+
+- compact argument
+- short bullets
+- good for definitions
+:::
+
+::: {.column width="65%"}
+### Right column
+
+| Feature | Useful for |
+|---|---|
+| Columns | comparing ideas |
+| Callouts | highlighting warnings |
+| Tables | small structured summaries |
+| Fragments | staged explanations |
+:::
+
+::::
+
+## Math
+
+Quarto supports inline and display math in RevealJS output:
+
+$$
+P(A \mid B) = \frac{P(B \mid A)P(A)}{P(B)}
+$$
+
+For a course slide, keep the equation visible and use the speaker notes for derivation details.
+
+::: notes
+This is a good place to describe the assumptions behind the formula without crowding the slide.
+:::
+
+## Diagrams
+
+```{mermaid}
+flowchart LR
+  A["Write .qmd"] --> B["quarto render"]
+  B --> C["RevealJS HTML"]
+  B --> D["Website page"]
+  C --> E["Embedded deck"]
+  D --> E
+```
+
+## Executed Python
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 2 * np.pi, 200)
+signals = {
+    "sin(x)": np.sin(x),
+    "cos(x)": np.cos(x),
+}
+
+fig, ax = plt.subplots(figsize=(7, 3.4))
+for label, y in signals.items():
+    ax.plot(x, y, label=label)
+
+ax.set_xlabel("x")
+ax.set_ylabel("signal")
+ax.legend(frameon=False)
+ax.grid(alpha=0.25)
+plt.show()
+```
+
+## Vertical Slides
+
+This is the top slide in a vertical stack.
+
+Press down to move into detail slides, or right to continue the main story.
+
+### Detail: authoring
+
+Vertical slides are useful for optional details:
+
+- backup explanations
+- worked derivations
+- setup notes
+- instructor-only context
+
+### Detail: presenting
+
+Speaker view still works:
+
+- press `S` to open speaker view
+- use notes for prompts
+- keep the visible slide uncluttered
+
+::: notes
+The exact keyboard shortcuts are RevealJS behavior. Quarto passes speaker notes through to RevealJS.
+:::
+
+## Images and Figures
+
+Quarto figure syntax works in slides too.
+
+```{python}
+import matplotlib.pyplot as plt
+
+labels = ["Read", "Edit", "Render", "Review"]
+values = [2, 4, 3, 2]
+
+fig, ax = plt.subplots(figsize=(6, 3.2))
+ax.bar(labels, values, color=["#2c7fb8", "#7fcdbb", "#fdae61", "#d7191c"])
+ax.set_ylabel("relative effort")
+ax.set_ylim(0, 5)
+ax.spines[["top", "right"]].set_visible(False)
+plt.show()
+```
+
+## Takeaways
+
+::: incremental
+1. Put slide sources in the website project.
+2. Render decks as RevealJS HTML.
+3. Embed or link to decks from normal website pages.
+4. Show source when it helps contributors copy the pattern.
+:::
+
+::: notes
+End by pointing back to the source tab in the handbook page.
+:::
