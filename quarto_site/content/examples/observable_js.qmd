@@ -23,7 +23,7 @@ stress responses, and airway remodeling. RNA-seq gives a readout of these change
 by counting reads assigned to each gene in treated and untreated samples.
 
 ```{mermaid}
-%%| fig-cap: Mermaid diagram of the analysis pipeline. See [diagrams](diagrams.md) for more information on diagrams in Quarto. 
+%%| fig-cap: Mermaid diagram of the analysis pipeline. See [diagrams](diagrams.qmd) for more information on diagrams in Quarto. 
 flowchart LR
   samples["Airway cells<br/>untreated vs<br/> dexamethasone-treated"]
   rnaseq["RNA-seq<br/>counts per gene"]

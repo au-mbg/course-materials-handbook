@@ -1,0 +1,81 @@
+---
+title: Diagrams
+---
+
+Quarto has support for [mermaid & graphviz textbased diagram languages](https://quarto.org/docs/authoring/diagrams.html). 
+
+This makes it easy to include diagrams as an explanatory tool in course material. 
+
+## Examples 
+
+### Analysis pipeline diagram
+
+This diagram is part of the [observable.js](observable_js.qmd) example page. Below is the diagram and its mermaid code
+
+
+::: {.panel-tabset}
+
+## Diagram
+
+```{mermaid}
+flowchart LR
+  samples["Airway cells<br/>untreated vs<br/> dexamethasone-treated"]
+  rnaseq["RNA-seq<br/>counts per gene"]
+  table["Prepared results table"]
+  volcano["Interactive volcano plot"]
+
+  samples --> rnaseq
+  rnaseq --> table
+  table --> volcano
+```
+
+
+## Code
+
+````
+```{mermaid}
+flowchart LR
+  samples["Airway cells<br/>untreated vs<br/> dexamethasone-treated"]
+  rnaseq["RNA-seq<br/>counts per gene"]
+  table["Prepared results table"]
+  volcano["Interactive volcano plot"]
+
+  samples --> rnaseq
+  rnaseq --> table
+  table --> volcano
+```
+````
+
+:::
+
+### Example: Pie chart
+
+Mermaid offers various chart types, here is a pie chart taken from the [mermaid documentation](https://mermaid.js.org/syntax/pie.html).
+
+
+::: {.panel-tabset}
+
+## Chart
+
+```{mermaid}
+%%| fig-align: center
+pie title Pets adopted by volunteers
+    "Dogs" : 386
+    "Cats" : 85
+    "Rats" : 15
+```
+
+## Code
+
+````
+```{mermaid}
+%%| fig-align: center
+pie title Pets adopted by volunteers
+    "Dogs" : 386
+    "Cats" : 85
+    "Rats" : 15
+```
+````
+:::
+
+### 

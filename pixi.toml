@@ -32,6 +32,7 @@ description = "Install TinyTeX and Manim TeX dependencies for CI"
 quarto = ">=1.9.38,<2"
 python = "==3.12"
 manim = ">=0.20.1,<0.21"
+scipy = ">=1.17.1,<2"
 
 [pypi-dependencies]
 jupyter = ">=1.1.1, <2"

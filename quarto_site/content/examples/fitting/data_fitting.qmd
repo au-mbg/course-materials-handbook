@@ -1,0 +1,150 @@
+---
+title: "Example: Evaluating Fits"
+filters:
+  - shinylive
+---
+
+::: {.callout-note}
+This page shows an example of a hypothetical lecture note that combines several features 
+of Quarto. This was inspired by notes written by Magnus Kjærgaard.
+:::
+
+Computers are very good at least-squares optimization. They can often find
+parameters for a model even when the model is not a sensible description of the
+experiment. The scientific question is therefore not only whether a curve can be
+drawn through the data, but whether the fit is good enough, simple enough, and
+consistent with what we know about the system.
+
+In kinetic experiments, a fitted parameter might be interpreted as a rate
+constant. That interpretation only makes sense if the model is appropriate for
+the data. A high $R^2$ value is useful, but it is not a substitute for looking at
+the data, the residuals, and the model assumptions.
+
+
+```{mermaid}
+%%| label: fig-diagram
+%%| fig-cap: A practical workflow for evaluating a fitted model. Using a mermaid [diagram](../diagrams.qmd)
+%%| fig-align: center
+flowchart TD
+  data["Data"]
+  model["Candidate model"]
+  fit["Fit parameters"]
+  residuals["Residuals"]
+  parsimony["Parsimony"]
+  theory["Theory check"]
+  decision["Accept or revise"]
+
+  data --> model --> fit --> residuals --> parsimony --> theory --> decision
+  residuals -. "pattern?" .-> model
+  theory -. "implausible?" .-> model
+```
+
+## Experimental variation
+
+Measurements from biochemical experiments are not expected to lie exactly on a
+theoretical curve. Technical variation can come from pipetting, temperature
+fluctuations, instrument precision, and other small differences between repeated
+measurements. For small data sets, showing the individual measurements is often
+more informative than only showing error bars.
+
+@fig-synthetic-data creates a small synthetic decay experiment with technical
+replicates. The mean values and standard deviations summarize the replicates, but
+the individual points are still visible.
+
+```{python}
+#| label: fig-synthetic-data
+#| code-fold: true
+#| fig-cap: "Synthetic kinetic data shown as individual technical replicates and mean ± SD. Using [Python code cells](../../code_interactive/python-code-cells.qmd)"
+import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(7)
+x = np.linspace(0, 20, 11)
+true_y = 1.05 * np.exp(-0.11 * x) + 0.04
+replicates = true_y[:, None] + rng.normal(0, 0.045, size=(len(x), 4))
+means = replicates.mean(axis=1)
+sd = replicates.std(axis=1, ddof=1)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+for column in replicates.T:
+    ax.scatter(x, column, color="#5b7f95", alpha=0.55, s=28)
+ax.errorbar(
+    x,
+    means,
+    yerr=sd,
+    fmt="o",
+    color="#202020",
+    ecolor="#202020",
+    capsize=3,
+    label="mean ± SD",
+)
+ax.plot(x, true_y, color="#b84a39", label="underlying curve")
+ax.set(xlabel="Time", ylabel="Signal")
+ax.grid(alpha=0.25)
+ax.legend()
+plt.show()
+```
+
+::: {.callout-note title="What the error bars can and cannot tell us"}
+If deviations between data and model are similar in size to the experimental
+variation, the model may be adequate within error. If deviations are much larger,
+or if they follow a systematic pattern, the model needs more scrutiny.
+:::
+
+## Residual explorer
+
+Residuals are the vertical differences between the observed data and the fitted
+model. For an appropriate model, residuals should usually scatter around zero
+without a clear pattern. A poor model can still have a convincing-looking curve
+and a high $R^2$, but the residuals often reveal what is wrong.
+
+Use the widget to simulate different kinds of data and fit different models.
+Try fitting a line to exponential data, then inspect the residual plot. Then
+compare the single exponential, double exponential, and quadratic polynomial
+when extrapolation is enabled.
+
+::: {#fig-residual-explorer .column-page-inset-right}
+```{shinylive-python}
+#| standalone: true
+#| viewerHeight: 760
+
+{{< include shiny_app.py >}}
+```
+
+Interactive residual explorer using [Shiny Apps](../shiny.qmd). The widget shows
+the fitted curve, residuals, and metrics, but it deliberately does not decide
+whether the model is acceptable. That judgment should come from comparing the
+visual pattern, the parameter count, and the scientific context.
+:::
+
+::: {.callout-warning title="Do not stop at R²"}
+The linear model can achieve a respectable $R^2$ on exponential data, especially
+when the noise level is high or the measured range is short. The residual plot is
+often more diagnostic because it shows whether deviations are random or
+systematic.
+:::
+
+## Parsimony and theoretical soundness
+
+More parameters usually make it easier to reduce the residual sum of squares.
+That does not automatically make the model better. A double exponential has more
+freedom than a single exponential, and a polynomial can mimic many shapes inside
+the measured range. Parsimony asks us to prefer the simplest model that explains
+the data adequately.
+
+Theoretical soundness is a separate check. For a kinetic decay experiment, an
+exponential model may be justified by the reaction mechanism. A polynomial might
+fit the measured points just as well, but it can predict an unphysical increase
+when extrapolated beyond the data. Wrong models often give wrong predictions
+outside the region where they were fitted.
+
+## Authoring note
+
+This page uses ShinyLive because the learner interaction changes the data and
+refits the selected model in Python. A Plotly or Observable JS widget would be a
+good fit for exploring prepared results, but this example needs live
+recalculation with `scipy.optimize.curve_fit`.
+
+The code is folded rather than hidden. That keeps the page readable as course
+material while still allowing handbook readers to inspect how the synthetic data,
+fits, residuals, and embedded app are built.

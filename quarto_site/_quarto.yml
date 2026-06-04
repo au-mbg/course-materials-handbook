@@ -37,7 +37,7 @@ website:
           - content/code_interactive/quarto-live-pyodide.qmd
           - content/code_interactive/notebooks.qmd
 
-      - section: "Examples & Ideas"
+      - section: "Examples"
         contents:
           - content/examples/manim/manim.qmd
           - content/examples/molstar.qmd
@@ -45,7 +45,8 @@ website:
           - content/examples/jupyter_widgets.qmd
           - content/examples/observable_js.qmd
           - content/examples/revealjs/revealjs.qmd
-          - content/examples/diagrams.md
+          - content/examples/diagrams.qmd
+          - content/examples/fitting/data_fitting.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:
@@ -67,5 +68,4 @@ format:
     mainfont: "inter, sans-serif"
     monofont: "JetBrains Mono, monospace"
     code-fold: show
-
 
