@@ -1,0 +1,227 @@
+---
+title: Marimo
+external_env: true
+---
+
+## Examples
+
+### Basic example - Reactive plots & text
+
+```{python .marimo}
+import marimo as mo
+import matplotlib.pyplot as plt
+import numpy as np
+```
+
+```{python .marimo}
+frequency = mo.ui.slider(1, 5, value=1, step=1, label='Frequency')
+amplitude = mo.ui.slider(1, 3, value=1, step=0.25, label='Amplitude')
+```
+
+This uses Marimo to create a reactive page illustrating the parameters of the sine-function. 
+The sliders change the amplitude and frequency which reactively recomputes the plot using 
+Pyodide.
+
+The formula below with the formula also changes based on the sliders.
+
+```{python .marimo}
+mo.md(
+    f"""
+    $$
+    f(x) = {amplitude.value} \cdot \sin({frequency.value}\pi  x)
+    $$
+
+    {frequency}
+    {amplitude}
+    """
+)
+```
+
+::: {.fig-align="right"}
+```{python .marimo}
+
+fig, ax = plt.subplots(figsize=(8, 4))
+
+def sine(x, freq, amp):
+    return amp*np.sin(x*freq*np.pi)
+
+x = np.linspace(0, 5, 300)
+
+ax.plot(x, sine(x, frequency.value, amplitude.value))
+ax.set_xlim(x.min(), x.max())
+ax.set_ylim(-amplitude.stop-0.1, amplitude.stop+0.1)
+
+fig
+```
+:::
+
+### Example: Numerical Integration
+
+Numerical integration involves approximating the definite integral 
+
+$$
+\int_a^b f(x) dx.
+$$
+
+This is typically done through a summation, for example
+
+$$
+\int_a^b f(x) dx \approx \sum_i w_i f(x_i) \Delta x.
+$$
+Where the evaluation points $x_i$ and the weights $w_i$ can be chosen.
+
+```{python .marimo}
+from dataclasses import dataclass
+from typing import Callable
+from enum import Enum
+import matplotlib.patches as patches
+```
+
+```{python .marimo}
+@dataclass
+class RectangleRuleConfig:
+    func: Callable
+    steps: int
+    interval: tuple[float, float]
+
+@dataclass
+class RectangleRuleResult:
+    x: np.array
+    midpoints: np.array
+    y: np.array
+    dx: float
+    num_int: float
+
+def rectangle_rule(config: RectangleRuleConfig) -> RectangleRuleResult:
+    x = np.linspace(*config.interval, config.steps).astype(float)
+    midpoints = (x[1:]+x[0:-1]) / 2
+    dx = midpoints[1] - midpoints[0]
+    y = config.func(midpoints)
+    num_int = np.sum(y) * dx
+
+    result = RectangleRuleResult(x, midpoints, y, dx, num_int)
+
+    return result
+```
+
+```{python .marimo}
+@dataclass
+class TrapezoidalRuleConfig:
+    func: Callable
+    steps: int
+    interval: tuple[float, float]
+
+@dataclass
+class TrapezoidalRuleResult:
+    x: np.array
+    y: np.array
+    dx: float
+    num_int: float
+
+def trapezoidal_rule(config: TrapezoidalRuleConfig):
+    x = np.linspace(*config.interval, config.steps)
+    y = config.func(x)
+    dx = x[1] - x[0]
+    
+    num_int = (y[0:-1] + y[1:]) * dx
+
+    result = TrapezoidalRuleResult(x, y, dx, num_int)
+    return result
+```
+
+
+```{python .marimo}
+
+class MethodOptions(Enum):
+    RECTANGLE_RULE = "Rectangle Rule"
+    TRAPEZOIDAL_RULE = "Trapezoidal Rule"
+
+
+
+method_options = [MethodOptions.RECTANGLE_RULE.value, MethodOptions.TRAPEZOIDAL_RULE.value]
+
+method = mo.ui.multiselect(
+    options=method_options,
+    value=[method_options[0]],
+    max_selections=1,
+)
+method
+```
+
+```{python .marimo}
+
+out = None
+is_well = True
+
+method_value = method.value[0]
+
+if method_value == MethodOptions.RECTANGLE_RULE.value:
+    steps = mo.ui.slider(start=3, stop=100, value=10, step=1, label="Steps")
+
+    out = mo.md(
+        f"""Using *rectangle rule* 
+
+        {steps}
+        """
+        )
+elif method_value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    steps = mo.ui.slider(start=3, stop=100, value=10, step=1, label="Steps")
+    out = mo.md(
+        f"""Using *trapozidal rule**
+
+        {steps}
+        """
+    )
+else:
+    is_well = False
+
+if is_well:
+    final = out
+else:
+    final = method.value + ["Something is wrong"]
+final
+```
+
+```{python .marimo}
+
+integrand = lambda x: x**2
+
+if method_value == MethodOptions.RECTANGLE_RULE.value:
+    config = RectangleRuleConfig(
+        func=integrand,
+        steps=steps.value, 
+        interval=(0, 10)
+    )
+
+    result = rectangle_rule(config)
+elif method_value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    config = TrapezoidalRuleConfig(
+        func=integrand,
+        steps=steps.value,
+        interval=(0, 10)
+    )
+    result = trapezoidal_rule(config)
+```
+
+```{python .marimo}
+inter_fig, inter_ax = plt.subplots()
+
+x_fine = np.linspace(*config.interval, 200)
+y_fine = config.func(x_fine)
+
+inter_ax.plot(x_fine, y_fine)
+
+if method_value == MethodOptions.RECTANGLE_RULE.value:
+    inter_ax.bar(result.midpoints, result.y, width=result.dx, facecolor='C1', alpha=0.5, edgecolor='k')
+
+elif method_value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    for i in range(len(result.x)-1):
+        trapz_x = [result.x[j] for j in [i, i, i+1, i+1, i]]
+        trapz_y = [0, result.y[i], result.y[i+1], 0, 0]
+        patch = patches.Polygon(xy=list(zip(trapz_x, trapz_y)), fill=True, alpha=0.5, facecolor='C1', edgecolor='k')
+        inter_ax.add_patch(patch)
+
+inter_fig
+```
+
+

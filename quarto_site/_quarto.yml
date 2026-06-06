@@ -47,6 +47,7 @@ website:
           - content/examples/revealjs/revealjs.qmd
           - content/examples/diagrams.qmd
           - content/examples/fitting/data_fitting.qmd
+          - content/examples/marimo/marimo.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:
@@ -68,4 +69,5 @@ format:
     mainfont: "inter, sans-serif"
     monofont: "JetBrains Mono, monospace"
     code-fold: show
+    code-tools: true
 
