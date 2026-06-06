@@ -1,6 +1,6 @@
 ---
 title: Marimo
-external_env: true
+external-env: true
 ---
 
 ## Examples
