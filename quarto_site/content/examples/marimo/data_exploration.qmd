@@ -1,0 +1,78 @@
+---
+title: "Data exploration"
+external-env: true
+---
+
+```{python .marimo}
+import marimo as mo
+import pandas as pd
+import altair as alt
+```
+
+This example explores the Palmer Penguins dataset. It uses 
+`marimo` with `altair`. 
+
+Use the dropdowns to select dimensions used for $x$-and $y$-coordinates and color. 
+
+```{python .marimo}
+df = pd.read_csv("https://raw.githubusercontent.com/mcnakhaee/palmerpenguins/refs/heads/master/palmerpenguins/data/penguins.csv")
+
+NUMERICAL_COLUMNS = ['bill_length_mm', 'bill_depth_mm' , 'flipper_length_mm' , 'body_mass_g']
+CATEGORICAL_COLUMNS = ['species', 'island', 'sex']
+
+```
+
+```{python .marimo}
+
+dropdown_options = list(df.keys())
+
+x_axis = mo.ui.dropdown(options=NUMERICAL_COLUMNS, value=NUMERICAL_COLUMNS[0], label='x')
+y_axis = mo.ui.dropdown(options=NUMERICAL_COLUMNS, value=NUMERICAL_COLUMNS[1], label='y')
+color = mo.ui.dropdown(options=CATEGORICAL_COLUMNS, value=CATEGORICAL_COLUMNS[0], label='Color')
+
+
+mo.hstack([x_axis, y_axis, color])
+```
+
+```{python .marimo}
+source = df
+
+base = alt.Chart(source, width=600, height=400)
+base_bar = base.mark_bar(opacity=0.3, binSpacing=0)
+
+points = base.mark_circle().encode(
+    alt.X(x_axis.value).scale(zero=False),
+    alt.Y(y_axis.value).scale(zero=False),
+    color=color.value,
+)
+
+top_hist = (
+    base_bar
+    .encode(
+        alt.X(f"{x_axis.value}:Q")
+            .bin(maxbins=20).stack(None).title(""),
+        alt.Y("count()").stack(None).title(""),
+        alt.Color(f"{color.value}:N"),
+    )
+    .properties(height=60)
+)
+
+right_hist = (
+    base_bar
+    .encode(
+        alt.Y(f"{y_axis.value}:Q")
+            .bin(maxbins=20)
+            .stack(None)
+            .title(""),
+        alt.X("count()").stack(None).title(""),
+        alt.Color(f"{color.value}:N"),
+    )
+    .properties(width=60)
+)
+
+mo.center(mo.ui.altair_chart(top_hist & (points | right_hist)))
+```
+
+```{python .marimo}
+df
+```

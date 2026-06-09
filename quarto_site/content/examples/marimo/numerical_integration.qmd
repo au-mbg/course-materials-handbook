@@ -1,0 +1,257 @@
+---
+title: "Numerical integration"
+external-env: true
+---
+
+```{python .marimo}
+import marimo as mo
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cycler
+from dataclasses import dataclass
+from typing import Callable
+from enum import Enum
+import matplotlib.patches as patches
+
+colors = ['black', 'forestgreen', 'coral', 'blueviolet', 'orange']
+default_cycler = cycler(color=colors)
+
+plt.rc('axes', prop_cycle=default_cycler)
+```
+
+
+Numerical integration involves approximating the definite integral 
+
+$$
+\int_a^b f(x) dx.
+$$
+
+This is typically done through a summation, for example
+
+$$
+\int_a^b f(x) dx \approx \sum_i w_i f(x_i) \Delta x.
+$$
+Where the evaluation points $x_i$ and the weights $w_i$ can be chosen.
+
+```{python .marimo}
+@dataclass
+class RectangleRuleConfig:
+    func: Callable
+    steps: int
+    interval: tuple[float, float]
+
+@dataclass
+class RectangleRuleResult:
+    x: np.array
+    midpoints: np.array
+    y: np.array
+    dx: float
+    num_int: float
+
+def rectangle_rule(config: RectangleRuleConfig) -> RectangleRuleResult:
+    x = np.linspace(*config.interval, config.steps).astype(float)
+    midpoints = (x[1:]+x[0:-1]) / 2
+    dx = midpoints[1] - midpoints[0]
+    y = config.func(midpoints)
+    num_int = np.sum(y) * dx
+
+    result = RectangleRuleResult(x, midpoints, y, dx, num_int)
+
+    return result
+```
+
+```{python .marimo}
+@dataclass
+class TrapezoidalRuleConfig:
+    func: Callable
+    steps: int
+    interval: tuple[float, float]
+
+@dataclass
+class TrapezoidalRuleResult:
+    x: np.array
+    y: np.array
+    dx: float
+    num_int: float
+
+def trapezoidal_rule(config: TrapezoidalRuleConfig):
+    x = np.linspace(*config.interval, config.steps)
+    y = config.func(x)
+    dx = x[1] - x[0]
+    
+    num_int = np.sum((y[0:-1] + y[1:]) / 2 * dx)
+
+    result = TrapezoidalRuleResult(x, y, dx, num_int)
+    return result
+```
+
+
+```{python .marimo}
+
+class MethodOptions(Enum):
+    RECTANGLE_RULE = "Rectangle"
+    TRAPEZOIDAL_RULE = "Trapezoidal"
+
+
+
+method_options = [MethodOptions.RECTANGLE_RULE.value, MethodOptions.TRAPEZOIDAL_RULE.value]
+
+method = mo.ui.radio(
+    options=method_options,
+    value=method_options[0],
+)
+method
+```
+
+```{python .marimo}
+steps = mo.ui.slider(start=3, stop=100, value=10, step=1, label="Steps")
+interval = mo.ui.range_slider(start=-50, stop=50, value=[-10, 10], label="Interval")
+
+out = mo.md(
+        f"""
+        {steps}
+        {interval}
+        """
+    )
+out
+```
+
+```{python .marimo}
+initial_code = """x**2"""
+code_input = mo.ui.code_editor(value=initial_code)
+latest_good_code = [initial_code]
+```
+
+```{python .marimo}
+code_out = mo.md(
+    f"""
+    Use the code block below to enter a one dimensional function to be integrated using Python syntax including numpy functions
+
+    {code_input}
+    """)
+code_out
+```
+
+```{python .marimo}
+try:
+    integrand = eval(f"lambda x: {code_input.value}")
+    latest_good_code.append(code_input.value)
+except:
+    integrand = eval(f"lambda x: {latest_good_code[-1]}")
+```
+
+
+```{python .marimo}
+
+integrand_func = integrand
+
+if method.value == MethodOptions.RECTANGLE_RULE.value:
+    config = RectangleRuleConfig(
+        func=integrand_func,
+        steps=steps.value, 
+        interval=interval.value
+    )
+
+    result = rectangle_rule(config)
+elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    config = TrapezoidalRuleConfig(
+        func=integrand_func,
+        steps=steps.value,
+        interval=interval.value
+    )
+    result = trapezoidal_rule(config)
+```
+
+```{python .marimo}
+inter_fig, inter_ax = plt.subplots()
+
+ddx = 0.05 * (config.interval[1]-config.interval[0])
+
+x_fine = np.linspace(config.interval[0]-ddx, config.interval[1]+ddx, 400)
+y_fine = config.func(x_fine)
+
+
+interval_idx = np.where((x_fine > config.interval[0]) * (x_fine < config.interval[1]))
+x_fine_in_interval = x_fine[interval_idx]
+
+inter_ax.plot(x_fine, y_fine)
+
+if method.value == MethodOptions.RECTANGLE_RULE.value:
+    inter_ax.bar(result.midpoints, result.y, width=result.dx, facecolor='C1', alpha=0.5, edgecolor='k')
+
+    # Plot error:
+    idx = np.clip(np.searchsorted(result.x[1:], x_fine_in_interval, side="left"), 0, len(result.midpoints))
+    inter_ax.fill_between(x_fine_in_interval, result.y[idx], y_fine[interval_idx], alpha=0.5, color='C2')    
+
+
+elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    for i in range(len(result.x)-1):
+        trapz_x = [result.x[j] for j in [i, i, i+1, i+1, i]]
+        trapz_y = [0, result.y[i], result.y[i+1], 0, 0]
+        patch = patches.Polygon(xy=list(zip(trapz_x, trapz_y)), fill=True, alpha=0.5, facecolor='C1', edgecolor='k')
+        inter_ax.add_patch(patch)
+
+    # Error: 
+    y_interp = np.interp(x_fine_in_interval, result.x, result.y)
+    inter_ax.fill_between(x_fine_in_interval, y_interp, y_fine[interval_idx], alpha=0.5, color='C2')
+    
+
+inter_ax.set_title(f"Approximate value of the integral: {result.num_int:0.2f}")
+
+inter_ax.axhline(y=0, color='gray', linestyle='--')
+inter_ax.axvline(x=config.interval[0], color='gray', linestyle='--')
+inter_ax.axvline(x=config.interval[1], color='gray', linestyle='--')
+
+
+inter_ax.set_xlim(x_fine.min(), x_fine.max())
+
+
+mo.center(inter_fig)
+```
+
+```{python .marimo}
+if method.value == MethodOptions.RECTANGLE_RULE.value:
+    description = mo.md(
+        r"""
+        **Rectangle Rule**
+
+        The *rectangle rule* is the simplest numerical integration method. It approximates 
+        the integral by "interpolating" it with step functions. For example for an definite integral between $a$ and $b$ a rectangle with height equal to the function value at the midpoint, 
+
+        $$
+        \int_a^b f(x) dx \approx f\left( \frac{a+b}{2} \right) \left( b-a \right)
+        $$
+
+        Obviously if the function varies siginificantly between $a$ and $b$ this will be quite a 
+        poor approximation. We can alleviate this by subdividing the interval into $N$ rectangles, leading to 
+
+        $$
+        \begin{align}
+        \int_a^b f(x) dx &\approx \sum_{i=1}^{N} f\left( \frac{x_{i-1}+x_i}{2} \right) (x_i-x_{i-1}) \\
+        & = \Delta x \sum_{i=1}^{N} f\left( \frac{x_{i-1}+x_i}{2} \right)
+        \end{align}
+        $$
+        Where the second equation assumes the points $x_i$ are equally spaced. 
+        """
+    )
+elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
+    description = mo.md(
+        r"""
+
+        **Trapezoidal Rule**
+        
+        The *trapezoidal rule* interpolates the underlying function with a trapezoid, so unlike the rectangular rule it does not assume that the function is constant over the 
+        region of a step $\Delta x$. This leads to the equation
+
+        $$
+        \int_a^b f(x) dx \approx \sum_{i=1}^N \frac{f(x_{i-1})+f(x_i)}{2} \Delta x_i
+        $$
+
+        Which geometrically is approximating the area of each step as a trapezoid - or equivalently interpolating the function as being linear between $x_{i-1}$ and $x_i$.
+
+        """
+    )
+
+description.callout("info")
+
+```

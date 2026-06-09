@@ -1,0 +1,52 @@
+---
+title: "Basic reactive Python"
+external-env: true
+---
+
+```{python .marimo}
+import marimo as mo
+import matplotlib.pyplot as plt
+import numpy as np
+```
+
+```{python .marimo}
+frequency = mo.ui.slider(1, 5, value=1, step=1, label='Frequency')
+amplitude = mo.ui.slider(1, 3, value=1, step=0.25, label='Amplitude')
+```
+
+This uses Marimo to create a reactive page illustrating the parameters of the sine-function. 
+The sliders change the amplitude and frequency which reactively recomputes the plot using 
+Pyodide.
+
+The formula below with the formula also changes based on the sliders.
+
+```{python .marimo}
+mo.md(
+    f"""
+    $$
+    f(x) = {amplitude.value} \cdot \sin({frequency.value}\pi  x)
+    $$
+
+    {frequency}
+    {amplitude}
+    """
+)
+```
+
+::: {.fig-align="right"}
+```{python .marimo}
+
+fig, ax = plt.subplots(figsize=(8, 4))
+
+def sine(x, freq, amp):
+    return amp*np.sin(x*freq*np.pi)
+
+x = np.linspace(0, 5, 300)
+
+ax.plot(x, sine(x, frequency.value, amplitude.value))
+ax.set_xlim(x.min(), x.max())
+ax.set_ylim(-amplitude.stop-0.1, amplitude.stop+0.1)
+
+mo.center(fig)
+```
+:::

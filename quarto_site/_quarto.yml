@@ -44,10 +44,16 @@ website:
           - content/examples/shiny.qmd
           - content/examples/jupyter_widgets.qmd
           - content/examples/observable_js.qmd
+          - section: Marimo / Reactive Python
+            href: content/examples/marimo/marimo.qmd
+            contents:
+              - content/examples/marimo/basic_example.qmd
+              - content/examples/marimo/numerical_integration.qmd
+              - content/examples/marimo/data_exploration.qmd
+
           - content/examples/revealjs/revealjs.qmd
           - content/examples/diagrams.qmd
           - content/examples/fitting/data_fitting.qmd
-          - content/examples/marimo/marimo.qmd
 
       - section: "Maintenance & Advanced Topics"
         contents:
