@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from typing import Callable
 from enum import Enum
 import matplotlib.patches as patches
+from sympy import sympify, lambdify, Symbol, integrate
+from sympy.printing import latex
 
 colors = ['black', 'forestgreen', 'coral', 'blueviolet', 'orange']
 default_cycler = cycler(color=colors)
@@ -125,7 +127,7 @@ latest_good_code = [initial_code]
 ```{python .marimo}
 code_out = mo.md(
     f"""
-    Use the code block below to enter a one dimensional function to be integrated using Python syntax including numpy functions
+    Use the code block below to enter a one dimensional function to be integrated using Python syntax
 
     {code_input}
     """)
@@ -133,17 +135,22 @@ code_out
 ```
 
 ```{python .marimo}
+
 try:
-    integrand = eval(f"lambda x: {code_input.value}")
+    integrand_expr, integrand_func = input_to_sympy_expr(code_input.value)
     latest_good_code.append(code_input.value)
 except:
-    integrand = eval(f"lambda x: {latest_good_code[-1]}")
+    integrand_expr, integrand_func = input_to_sympy_expr(latest_good_code[-1])
 ```
-
 
 ```{python .marimo}
 
-integrand_func = integrand
+x = Symbol("x")
+exact_integral_expr = integrate(integrand_expr, x)
+exact_integral = integrate(integrand_expr, (x, interval.value[0], interval.value[1]))
+```
+
+```{python .marimo}
 
 if method.value == MethodOptions.RECTANGLE_RULE.value:
     config = RectangleRuleConfig(
@@ -160,6 +167,33 @@ elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
         interval=interval.value
     )
     result = trapezoidal_rule(config)
+```
+
+```{python .marimo}
+
+_low = interval.value[0]
+_high = interval.value[1]
+
+mo.md(rf"""
+    The integral is
+
+    $$
+    \begin{{align*}}
+    I_{{\mathrm{{analytical}}}} &= \int_{{{_low:d}}}^{{{_high:d}}} {latex(integrand_expr)} dx \newline
+    &= \left[{latex(exact_integral_expr)} \right]_{{{_low:d}}}^{{{_high:d}}} \newline 
+    &= {latex(exact_integral_expr.subs(x, _high))} - \left({latex(exact_integral_expr.subs(x, _low))} \right) \newline
+    &= {latex(exact_integral_expr.subs(x, _high) - exact_integral_expr.subs(x, _low))} \newline
+    &\approx {float(exact_integral):0.2f} 
+    \end{{align*}}
+    $$
+
+    Numerical integration leads to 
+
+    $$
+    I_{{\mathrm{{numerical}}}} = {result.num_int:0.2f}
+    $$    
+
+""")
 ```
 
 ```{python .marimo}
@@ -194,9 +228,6 @@ elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
     # Error: 
     y_interp = np.interp(x_fine_in_interval, result.x, result.y)
     inter_ax.fill_between(x_fine_in_interval, y_interp, y_fine[interval_idx], alpha=0.5, color='C2')
-    
-
-inter_ax.set_title(f"Approximate value of the integral: {result.num_int:0.2f}")
 
 inter_ax.axhline(y=0, color='gray', linestyle='--')
 inter_ax.axvline(x=config.interval[0], color='gray', linestyle='--')
@@ -254,4 +285,12 @@ elif method.value == MethodOptions.TRAPEZOIDAL_RULE.value:
 
 description.callout("info")
 
+```
+
+```{python .marimo}
+def input_to_sympy_expr(input_txt):
+    x = Symbol("x")
+    expr = sympify(input_txt)
+    func = lambdify(x, expr, modules="numpy")
+    return expr, func
 ```
