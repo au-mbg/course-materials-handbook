@@ -50,6 +50,7 @@ website:
               - content/examples/marimo/basic_example.qmd
               - content/examples/marimo/numerical_integration.qmd
               - content/examples/marimo/data_exploration.qmd
+              - content/examples/marimo/reactions.qmd
 
           - content/examples/revealjs/revealjs.qmd
           - content/examples/diagrams.qmd

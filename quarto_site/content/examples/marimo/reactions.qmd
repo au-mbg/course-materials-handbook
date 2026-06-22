@@ -1,0 +1,622 @@
+---
+title: "Chemical reactions"
+external-env: true
+pyproject: |
+  dependencies = ["wigglystuff"]
+---
+
+```{python .marimo}
+import marimo as mo
+from dataclasses import dataclass, field
+from wigglystuff import GraphWidget
+import sympy as sp
+import numpy as np
+import scipy 
+import matplotlib.pyplot as plt
+```
+
+```{python .marimo}
+import matplotlib.colors as mcolors
+_COLORS = [
+    "royalblue",
+    "darkorange",
+    "mediumpurple",
+    "forestgreen",
+    "deeppink",
+    "gold",
+    "navy",
+    "turquoise",
+    "crimson",
+    "yellowgreen",
+    "blueviolet",
+    "saddlebrown",
+    "deepskyblue",
+    "darkmagenta",
+    "mediumseagreen",
+    "slategray",
+]
+
+class Colors:
+    def __init__(self):
+        self.COLORS = _COLORS
+    
+    def __getitem__(self, index: int):
+        return self.COLORS[index % len(self.COLORS)]
+
+COLORS = Colors()
+```
+
+
+```{python .marimo}
+import re
+
+SPECIES_RE = re.compile(r"^[A-Z]+_*[0-9]*$")
+
+
+RATE_CONSTANT_RE = re.compile(
+    # r"^k(?P<subscript>[0-9]*?[a-z]*?)$"
+    r"\bk(?P<subscript>[A-Za-z0-9]+)\b"
+)
+
+
+def rate_constant_to_latex(symbol: sp.Symbol) -> str:
+    name = symbol.name
+    match = RATE_CONSTANT_RE.fullmatch(name)
+
+    if match is None:
+        return name
+
+
+    subscript = match.group("subscript")
+
+    return rf"k_{{{subscript}}}"
+```
+
+```{python .marimo}
+def parse_side(side: str) -> dict[str, int]:
+    species = {}
+
+    for term in side.split("+"):
+        term = term.strip()
+        if not term:
+            continue
+
+        parts = term.split()
+
+        if len(parts) == 1:
+            coefficient = 1
+            symbol = parts[0]
+        elif len(parts) == 2:
+            coefficient = int(parts[0])
+            symbol = parts[1]
+        else:
+            raise ValueError(f"Invalid reaction term: {term!r}")
+
+        if not SPECIES_RE.fullmatch(symbol):
+            raise ValueError(f"Invalid species symbol: {symbol!r}")
+
+        species[symbol] = species.get(symbol, 0) + coefficient
+
+    return species
+
+class Reaction:
+
+    def __init__(self, 
+        reactants: str, 
+        products: str,
+        forward_rate: str, 
+        reverse_rate: str):
+
+        self.reactants = reactants if reactants else None
+        self.products = products if products else None
+        self.forward_rate = forward_rate if forward_rate else 0
+        self.reverse_rate = reverse_rate if reverse_rate else 0
+        self.reactant_species = parse_side(self.reactants) if self.reactants else {}
+        self.product_species = parse_side(self.products) if self.products else {}
+
+    def is_valid(self):
+        valid = True
+        # valid *= (self.reactants is None and self.reverse_rate is None) or (self.reactants is not None and self.reverse_rate is not None)
+        # valid *= (self.products is None and self.forward_rate is None) or (self.products is not None and self.forward_rate is not None)
+        # valid *= self.reactants is not None or self.products is not None
+        return valid
+
+    def get_equation(self, selected: bool = False) -> str:
+        equality_symbol = r"\leftrightharpoons" if self.reverse_rate != 0 else r"\rightarrow"
+        # equality_symbol = rf"\overset{{{self.forward_rate}}}{{{equality_symbol}}}"
+        # visual_operator = (lambda x: f"\mathbf{{{x}}}") if selected else lambda x: f"{x}"
+    
+        if self.reactants:
+            _reactant_symbol = self.reactants
+        else:
+            _reactant_symbol = r"\varnothing"
+
+        if self.products:
+            _product_symbol = self.products
+        else:
+            _product_symbol = r"\varnothing"
+
+
+        visual_operator = (lambda x: rf"\mathbf{{\textcolor{{green}}{{{x}}}}}") if selected else lambda x: f"{x}"
+        _base = visual_operator(f"{_reactant_symbol} {equality_symbol} {_product_symbol}")
+        return f"""
+$$
+{_base}
+$$
+"""
+
+
+@dataclass
+class SymbolicNetworkModel:
+    species: tuple[sp.Symbol, ...]
+    parameters: tuple[sp.Symbol, ...]
+    stoichiometric_matrix: sp.Matrix
+    rate_vectors: list[sp.Expr]
+    rhs: list[sp.Expr]
+    rhs_func: sp.Lambda
+    reactions: list[Reaction]
+    symbol_names: dict[sp.Symbol, str]
+
+    @classmethod
+    def from_reactions(cls, reactions: list[Reaction]) -> "SymbolicNetworkModel":
+        # Species are the union of all reactant and product species across all reactions
+        species_names = sorted({
+            name
+            for reaction in reactions
+            for name in (
+                reaction.reactant_species
+                | reaction.product_species
+            )
+        })
+
+        species = tuple(
+            sp.Symbol(name, nonnegative=True)
+            for name in species_names
+        )
+
+        symbol_map = {
+            str(symbol): symbol
+            for symbol in species
+        }
+
+        # Parse all rates first so parameter symbols can be
+        # extracted reliably from the SymPy expressions.
+        net_rates: list[sp.Expr] = []
+
+        for reaction in reactions:
+            forward = sp.sympify(
+                reaction.forward_rate,
+                locals=symbol_map,
+            )
+
+            if reaction.reverse_rate is None:
+                net_rate = forward
+            else:
+                reverse = sp.sympify(
+                    reaction.reverse_rate,
+                    locals=symbol_map,
+                )
+                net_rate = forward - reverse
+
+            net_rates.append(sp.simplify(net_rate))
+
+        species_symbol_set = set(species)
+
+
+        # Parameters: Rate constants and any other variables appearing in the rate expressions that are not species. 
+        parameter_set = set().union(
+            *(
+                rate.free_symbols - species_symbol_set
+                for rate in net_rates
+            )
+        )
+
+        parameters = tuple(
+            sorted(parameter_set, key=str)
+        )
+
+
+        # Stoichiometric matrix has one row per species and one column per reaction,
+        # with entries given by the net change in the number of molecules of each species in each reaction
+        stoichiometric_matrix = sp.zeros(len(species), len(reactions))
+        for j, reaction in enumerate(reactions):
+            for i, s in enumerate(species):
+                stoichiometric_matrix[i, j] = reaction.product_species.get(str(s), 0) - reaction.reactant_species.get(
+                    str(s), 0
+                )
+
+        # Rate vector has one entry per reaction, with entries given by the rate expression for each reaction
+        rate_vectors = sp.Matrix(net_rates)
+
+        # rhs is the product of the stoichiometric matrix and the rate vector, giving the system of ODEs for the time evolution of the species concentrations
+        rhs = stoichiometric_matrix * rate_vectors
+
+        # rhs_func is a lambda function representing the system of ODEs
+        rhs_func = sp.lambdify((*species, *parameters), rhs, modules="numpy")
+
+        # Symbol names
+        symbol_names = {
+            parameter: rate_constant_to_latex(parameter)
+            for parameter in parameters
+            }
+
+        for spec in species:
+            symbol_names[spec] = f"[{spec}]"
+
+
+        return cls(
+            species=species,
+            parameters=parameters,
+            stoichiometric_matrix=stoichiometric_matrix,
+            rate_vectors=rate_vectors,
+            rhs=rhs,
+            rhs_func=rhs_func,
+            reactions=reactions,
+            symbol_names=symbol_names
+        )
+
+    def get_graph(self):
+        nodes = []
+        edges = []
+        for i, _reaction in enumerate(self.reactions):
+            reaction_node = f"Reaction {i}"
+
+            nodes.append(reaction_node)
+            nodes.extend(_reaction.reactant_species.keys())
+            nodes.extend(_reaction.product_species.keys())
+
+            if _reaction.forward_rate != 0:
+                edges.extend([(r, reaction_node) for r in _reaction.reactant_species.keys()])
+                edges.extend([(reaction_node, p) for p in _reaction.product_species.keys()])
+
+            if _reaction.reverse_rate != 0:
+                edges.extend([(reaction_node, r) for r in _reaction.reactant_species.keys()])
+                edges.extend([(p, reaction_node) for p in _reaction.product_species.keys()])
+
+
+        nodes = set(nodes)
+
+        return nodes, edges
+
+    def summary(self, widget):
+        _equations = "The reactions specified are"
+
+        for _i, _reaction in enumerate(self.reactions):
+
+            selected = f"Reaction {_i}" in widget.selected_nodes
+
+            _equations += _reaction.get_equation(selected)
+
+        _equations += "With the given forward and reverse rates the system of differential equations is"
+
+        diff_eqs = ""
+        for index, species in enumerate(self.species):
+
+            selected = str(species) in widget.selected_nodes
+            visual_operator = (lambda x: rf"\mathbf{{\textcolor{{green}}{{{x}}}}}") if selected else lambda x: f"{x}"
+
+            left = rf"\frac{{d[{str(species)}]}}{{dt}}"
+            right = rf" = {sp.latex(self.rhs[index], symbol_names=self.symbol_names)}"
+            diff_eqs += visual_operator(left) + "&" + visual_operator(right) + r"\newline"
+
+
+        _equations += rf"""
+$$
+\begin{{align}}
+{diff_eqs}
+\end{{align}}
+$$
+        """
+
+        return _equations
+        
+```
+
+```{python .marimo}
+def create_reaction_input(
+    reactants="", 
+    products="",
+    rate_forward="",
+    rate_reverse=""):
+
+    reactants = mo.ui.text(placeholder="Reactants...", label="Reactants", value=reactants)
+    products = mo.ui.text(placeholder="Products...", label="Products", value=products)
+    forward_rate = mo.ui.text(placeholder="Forward rate...", label="$r_f$", value=rate_forward)
+    reverse_rate = mo.ui.text(placeholder="Reverse rate...", label="$r_r$", value=rate_reverse)
+
+    stack = mo.ui.dictionary(
+        {
+        "reactants": reactants, 
+        "products": products, 
+        "forward_rate": forward_rate, 
+        "reverse_rate": reverse_rate,
+        }
+    )
+
+    return stack
+```
+
+```{python .marimo}
+preset_options = list(REACTION_PRESETS.keys())
+preset_selector = mo.ui.dropdown(preset_options, value=preset_options[0], label="Reaction preset")
+
+preset_selector
+```
+
+
+
+```{python .marimo}
+max_reactions = 12
+
+selected_preset = REACTION_PRESETS[preset_selector.value]
+
+_rows = []
+for row in selected_preset:
+    _rows.append(create_reaction_input(*row))
+
+_rows += [create_reaction_input() for i in range(max_reactions-len(selected_preset))]
+
+reaction_rows = mo.ui.array(_rows)
+
+row_count = mo.ui.number(
+    start=1,
+    stop=max_reactions,
+    step=1,
+    value=len(selected_preset),
+    label="Number of reactions",
+)
+```
+
+```{python .marimo}
+_field = f"{row_count}"
+
+for _reaction in reaction_rows[:row_count.value]:
+    _field += f"{_reaction.hstack()}"
+
+mo.md(_field)
+```
+
+```{python .marimo}
+reactions = []
+
+for _reaction in reaction_rows[:row_count.value]:
+    reactions.append(Reaction(**_reaction.value))
+
+network = SymbolicNetworkModel.from_reactions([r for r in reactions if r.is_valid()])
+```
+
+
+```{python .marimo}
+summary = network.summary(widget)
+mo.md(summary)
+```
+
+```{python .marimo}
+nodes, edges = network.get_graph()
+```
+
+```{python .marimo}
+
+_widget = GraphWidget()
+
+_spec_count = 0
+
+_species_list = [str(species) for species in network.species]
+
+for node in nodes:
+
+    if "Reaction" in node:
+        node_color = 'black'
+    else:
+        node_color = COLORS[_species_list.index(node)]
+
+    _widget.add_node(node, color=node_color)
+
+for edge in edges:
+    _widget.add_edge(*edge)
+
+widget = mo.ui.anywidget(_widget)
+widget
+```
+
+```{python .marimo}
+def _add_subscript(species: sp.Symbol):
+    str_species = str(species)
+    if not "_" in str_species:
+        return f"${str_species}_0$"
+    else:
+        sup, sub = str_species.split("_")
+        sub += ",0"
+        return f"${sup}_{{{sub}}}$"
+
+
+
+# Parameters
+parameter_sliders = mo.ui.array(
+    [
+    mo.ui.slider(start=0.0, 
+        stop=5, 
+        step=0.01, 
+        value=selected_preset.parameters.get(str(param), 0.5),
+        label=f"${str(sp.latex(param, symbol_names=network.symbol_names))}$") 
+        for param in network.parameters
+    ]
+)
+
+
+# Initial concentrations
+conc_sliders = mo.ui.array(
+    [
+        mo.ui.slider(start=0.0, 
+            stop=10, 
+            step=0.1, 
+            value=selected_preset.initial_conc.get(str(species), 0.5),
+            label=_add_subscript(species)
+            )
+        for species in network.species
+    ]
+)
+
+# Solution parameters
+t_max = mo.ui.slider(start=1.0, stop=250, step=1, value=100, label="$t_{\mathrm{max}}$")
+t_step = mo.ui.slider(start=0.01, stop=1, step=0.01, value=0.1, label="$\Delta t$")
+
+
+
+parameter_title = mo.md("**Reaction parameters**")
+conc_title = mo.md("**Initial concentrations**")
+sim_title = mo.md("**Simulation parameters**")
+
+mo.hstack([
+    mo.vstack([conc_title, *conc_sliders]), 
+    mo.vstack([parameter_title, *parameter_sliders]),
+    mo.vstack([sim_title, t_max, t_step])
+])
+```
+
+```{python .marimo}
+parameter_values = [slider.value for slider in parameter_sliders]
+initial_conc_values = [slider.value for slider in conc_sliders]
+
+t_eval = np.arange(0, t_max.value, t_step.value)
+solution = scipy.integrate.solve_ivp(
+    lambda t, y: network.rhs_func(*y, *parameter_values).flatten(),
+    (t_eval[0], t_eval[-1]),
+    initial_conc_values,
+    t_eval=t_eval,
+)
+```
+
+```{python .marimo}
+fig, ax = plt.subplots()
+
+for i, species in enumerate(network.species):
+    ax.plot(t_eval, solution.y[i], color=COLORS[i], label=f"${str(species)}$")
+
+ax.set_title("Concentration vs Time")
+ax.set_xlabel("Time")
+ax.set_ylabel("Concentration")
+ax.axhline(0, color='black', linestyle=":")
+ax.legend()
+mo.ui.matplotlib(ax).center()
+```
+
+```{python .marimo}
+
+if selected_preset.name != "Custom":
+    callout = mo.callout(selected_preset.description, kind="info")
+else:
+    callout = None
+callout 
+```
+
+
+```{python .marimo}
+@dataclass
+class ReactionPreset:
+    name: str
+    reactions: list[list[str], ...]
+    description: str = field(default="")
+    initial_conc: dict[str, float] = field(default_factory=dict)
+    parameters: dict[str, float] = field(default_factory=dict)
+
+    def __getitem__(self, index):
+        return self.reactions[index]
+
+    def __len__(self):
+        return len(self.reactions)
+```
+
+```{python .marimo}
+
+_PRESETS = [
+    ReactionPreset(
+        name="Bimolecular",
+        reactions=[["A+B", "C", "k1f*A*B", "k1r*C"]],
+        description="A bimolecular reaction",
+        initial_conc={"A": 0.5, "B": 0.5, "C": 0},
+        parameters = {"k1f": 0.5, "k1r": 0.25}
+
+    ),
+    ReactionPreset(
+        name="Michealis-Menten",
+        reactions=[
+            ["E+S", "ES", "k1*E*S", ""],
+            ["ES", "E+S", "km1*ES", ""],
+            ["ES", "E+P", "kcat*ES", ""]
+        ],
+        initial_conc={"E": 0.5, "ES": 0.0, "S": 0.5, "P": 0.0},
+        description=MICHEALIS_MENTEN_DESCRIPTION
+    ),
+    ReactionPreset(
+        name="Autocatalytic",
+        reactions=[["A + B", "2 B", "kf*A*B", "kr*B**2"]],
+        initial_conc={"B": 0.01, "A": 1.0},
+        parameters={"kf": 0.5, "kr": 0.25}
+    ),
+    ReactionPreset(
+        name="Competeting",
+        reactions=[
+            ["A", "B", "k1*A", ""],
+            ["A", "C", "k2*A", ""]
+        ],
+        initial_conc={"A": 1, "B": 0, "C": 0},
+        parameters={"k1": 0.4, "k2": 0.2}
+    ),
+    ReactionPreset(
+        name='Lotka-Volterra',
+        reactions=[
+        ["X", "2 X", "a*X", ""],
+        ["X+Y", "2 Y", "b*X*Y", ""],
+        ["Y", "", "c*Y", ""],
+        ],
+    ),
+    ReactionPreset(
+        name="Brusselator",
+        reactions=[
+            ["", "X", "a", ""],
+            ["X", "", "X", ""],
+            ["X", "Y", "b*X", ""],
+            ["2 X + Y", "3 X", "X**2*Y", ""]
+        ],
+        parameters={"a": 1.3, "b": 3.0}
+    ),
+    ReactionPreset(
+        name='Dual phosphorylation', 
+        reactions=[
+            ["K + S_0", "KS_0", "k1*K*S_0", "km1*KS_0"],
+            ["KS_0", "K + S_1", "kcat1*KS_0", ""],
+            ["K+S_1", "KS_1", "k2*K*S_1", "km2*KS_1"],
+            ["KS_1", "K+S_2", "kcat2*KS_1", ""],
+            ["P+S_2", "PS_2", "k3*P*S_2", "km3*PS_2"],
+            ["PS_2", "P+S_1", "kcat3*PS_2", ""],
+            ["P+S_1", "PS_1", "k4*P*S_1", "km4*PS_1"],
+            ['PS_1', "P+S_0", "kcat4*PS_1", ""]
+        ],
+        initial_conc={"K": 0.1, "P": 0.1, "S_0": 1.0,
+                    "S_1": 0.0, "S_2": 0.0, "KS_0": 0.0,
+                    "KS_1": 0.0, "PS_2": 0.0, "PS_1": 0.0,},
+        parameters={
+            "k1": 1.0,
+            "km1": 1.0,
+            "kcat1": 1.0,
+            "k2": 1.0,
+            "km2": 1.0,
+            "kcat2": 1.0,
+            "k3": 1.0,
+            "km3": 1.0,
+            "kcat3": 0.8,
+            "k4": 1.0,
+            "km4": 1.0,
+            "kcat4": 0.8,
+        }
+    ),
+    ReactionPreset(name="Custom", reactions=["", "", "", ""]),
+]
+
+REACTION_PRESETS = {preset.name: preset for preset in _PRESETS}
+```
+
+```{python .marimo}
+MICHEALIS_MENTEN_DESCRIPTION="""Models an enzyme binding a substrate to form an enzyme–substrate complex, followed by conversion to product. It illustrates how saturating kinetics emerge from an explicit reaction mechanism and how the reaction rate becomes limited by enzyme availability at high substrate concentration."""
+```

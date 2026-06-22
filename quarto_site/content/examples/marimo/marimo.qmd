@@ -14,6 +14,7 @@ Quarto integration comes from the `quarto-marimo`-extension, see [GitHub](https:
 - [Basic reactive Python](basic_example.qmd): A basic example showing interactivity with `marimo`.
 - [Numerical integration](numerical_integration.qmd): An example showing numerical integration. This uses more features of `marimo` and has much more underlying Python code. 
 - [Data exploration](data_exploration.qmd): A simple data-exploration widget using `marimo` and `altair` on the Palmer's penguins dataset. 
+- [Chemical reactions](reactions.qmd): Using `sympy` to setup up algebraic reaction equations that are then solved numerically. 
 
 ## Technical details
 
