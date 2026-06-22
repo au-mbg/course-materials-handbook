@@ -460,7 +460,7 @@ conc_sliders = mo.ui.array(
 # Solution parameters
 t_max = mo.ui.slider(start=1.0, stop=250, step=1, value=100, label="$t_{\mathrm{max}}$")
 t_step = mo.ui.slider(start=0.01, stop=1, step=0.01, value=0.1, label="$\Delta t$")
-
+solver_menu = mo.ui.dropdown(options=["RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA"], value="RK45", label="Method")
 
 
 parameter_title = mo.md("**Reaction parameters**")
@@ -470,7 +470,7 @@ sim_title = mo.md("**Simulation parameters**")
 mo.hstack([
     mo.vstack([conc_title, *conc_sliders]), 
     mo.vstack([parameter_title, *parameter_sliders]),
-    mo.vstack([sim_title, t_max, t_step])
+    mo.vstack([sim_title, t_max, t_step, solver_menu])
 ])
 ```
 
@@ -484,6 +484,7 @@ solution = scipy.integrate.solve_ivp(
     (t_eval[0], t_eval[-1]),
     initial_conc_values,
     t_eval=t_eval,
+    method=solver_menu.value
 )
 ```
 
@@ -564,6 +565,17 @@ _PRESETS = [
         parameters={"k1": 0.4, "k2": 0.2}
     ),
     ReactionPreset(
+        name="Circular",
+        reactions=[
+            ["A", "B", "ka*A", ""],
+            ["B", "C", "kb*B", ""], 
+            ["C", "D", "kc*C", ""],
+            ["D", "E", "kd*D", ""],
+            ["E", "A", "ke*E", ""],
+            ],
+        initial_conc={"A":1.0, "B":0, "C": 0, "D":0, "E": 0}
+    ),
+    ReactionPreset(
         name='Lotka-Volterra',
         reactions=[
         ["X", "2 X", "a*X", ""],
@@ -620,3 +632,93 @@ REACTION_PRESETS = {preset.name: preset for preset in _PRESETS}
 ```{python .marimo}
 MICHEALIS_MENTEN_DESCRIPTION="""Models an enzyme binding a substrate to form an enzyme–substrate complex, followed by conversion to product. It illustrates how saturating kinetics emerge from an explicit reaction mechanism and how the reaction rate becomes limited by enzyme availability at high substrate concentration."""
 ```
+
+```{python .marimo}
+N = network.stoichiometric_matrix
+x = sp.Matrix(network.species)
+
+left_nullspace = N.T.nullspace()
+
+conserved_quantities = [
+    sp.expand((vector.T * x)[0])
+    for vector in left_nullspace
+]
+```
+
+```{python .marimo}
+
+_eqs = ""
+
+for _idx, quant in enumerate(conserved_quantities):
+    _eqs += rf"C_{_idx}&: \quad {sp.latex(quant, symbol_names=network.symbol_names)} \\"
+
+
+# conserved_latex = sp.latex(conserved_quantities[0])
+
+mo.md(rf"""
+$$
+\begin{{aligned}}
+{_eqs}
+\end{{aligned}}
+$$
+"""
+)
+
+```
+
+```{python .marimo}
+def evaluate_expression_on_solution(
+    expression: sp.Expr,
+    species: list[sp.Symbol],
+    solution_y: np.ndarray,
+) -> np.ndarray:
+    if solution_y.shape[0] != len(species):
+        raise ValueError(
+            "The number of solution rows must match "
+            "the number of species."
+        )
+
+    function = sp.lambdify(
+        tuple(species),
+        expression,
+        modules="numpy",
+    )
+
+    values = function(*solution_y)
+
+    # A constant expression may produce a scalar rather than
+    # one value per time point.
+    if np.ndim(values) == 0:
+        values = np.full(
+            solution_y.shape[1],
+            float(values),
+        )
+
+    return np.asarray(values, dtype=float)
+
+evaluated_conserved_quantities = {
+    expression: evaluate_expression_on_solution(
+        expression,
+        network.species,
+        solution.y,
+    )
+    for expression in conserved_quantities
+}
+
+fig_cons, ax_cons = plt.subplots()
+
+for expression, values in evaluated_conserved_quantities.items():
+    ax_cons.plot(
+        solution.t,
+        values-values[0],
+        label=rf"${sp.latex(expression)}$",
+    )
+
+ax_cons.set_xlabel("Time")
+ax_cons.set_ylabel("Deviation from initial value")
+ax_cons.set_title("Numerical conservation error")
+ax_cons.legend()
+
+mo.ui.matplotlib(ax_cons).center()
+```
+
