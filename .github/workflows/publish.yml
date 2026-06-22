@@ -28,7 +28,6 @@ jobs:
         run: |
           pixi run install-tinytex
           echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
-          pixi run tlmgr update --self
       - run: pixi run render
 
       - name: Upload Pages artifact

@@ -23,7 +23,7 @@ cwd = "quarto_site/"
 description = "Clean the rendered quarto site"
 
 [tasks.install-tinytex]
-cmd = "quarto install tinytex --no-prompt && export PATH=\"$HOME/.TinyTeX/bin/x86_64-linux:$PATH\" && tlmgr install dvisvgm standalone preview"
+cmd = "quarto install tinytex --no-prompt && export PATH=\"$HOME/.TinyTeX/bin/x86_64-linux:$PATH\" && tlmgr update --self && tlmgr install dvisvgm standalone preview"
 description = "Install TinyTeX and Manim TeX dependencies for CI"
 
 [tasks]
