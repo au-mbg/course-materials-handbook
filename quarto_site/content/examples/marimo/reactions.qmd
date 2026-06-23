@@ -23,17 +23,17 @@ _COLORS = [
     "mediumpurple",
     "forestgreen",
     "deeppink",
+    "slategray",
+    "crimson",
     "gold",
     "navy",
     "turquoise",
-    "crimson",
     "yellowgreen",
     "blueviolet",
     "saddlebrown",
     "deepskyblue",
     "darkmagenta",
     "mediumseagreen",
-    "slategray",
 ]
 
 class Colors:
@@ -388,7 +388,7 @@ network = SymbolicNetworkModel.from_reactions([r for r in reactions if r.is_vali
 
 ```{python .marimo}
 summary = network.summary(widget)
-mo.md(summary)
+mo.md(summary + conservation_text)
 ```
 
 ```{python .marimo}
@@ -458,8 +458,18 @@ conc_sliders = mo.ui.array(
 )
 
 # Solution parameters
-t_max = mo.ui.slider(start=1.0, stop=250, step=1, value=100, label="$t_{\mathrm{max}}$")
-t_step = mo.ui.slider(start=0.01, stop=1, step=0.01, value=0.1, label="$\Delta t$")
+t_max = mo.ui.slider(
+    start=1.0, stop=250, step=1, 
+    value=selected_preset.simulation_parameters.get("tmax", 50), 
+    label="$t_{\mathrm{max}}$"
+    )
+
+t_step = mo.ui.slider(
+    start=0.01, stop=1, step=0.01, 
+    value=selected_preset.simulation_parameters.get("dt", 0.1), 
+    label="$\Delta t$"
+    )
+
 solver_menu = mo.ui.dropdown(options=["RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA"], value="RK45", label="Method")
 
 
@@ -489,7 +499,7 @@ solution = scipy.integrate.solve_ivp(
 ```
 
 ```{python .marimo}
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(9, 5))
 
 for i, species in enumerate(network.species):
     ax.plot(t_eval, solution.y[i], color=COLORS[i], label=f"${str(species)}$")
@@ -498,19 +508,32 @@ ax.set_title("Concentration vs Time")
 ax.set_xlabel("Time")
 ax.set_ylabel("Concentration")
 ax.axhline(0, color='black', linestyle=":")
-ax.legend()
-mo.ui.matplotlib(ax).center()
+ax.legend();
 ```
 
 ```{python .marimo}
 
-if selected_preset.name != "Custom":
-    callout = mo.callout(selected_preset.description, kind="info")
-else:
-    callout = None
-callout 
+fig_cons, ax_cons = plt.subplots(figsize=(9, 5))
+
+for expression, values in evaluated_conserved_quantities.items():
+    ax_cons.plot(
+        solution.t,
+        values-values[0],
+        label=rf"${sp.latex(expression)}$",
+    )
+
+ax_cons.set_xlabel("Time")
+ax_cons.set_ylabel("Deviation from initial value")
+ax_cons.set_title("Numerical conservation error")
+ax_cons.legend();
 ```
 
+```{python .marimo}
+mo.ui.tabs({
+    "Concentration vs time": mo.ui.matplotlib(ax).center(),
+    "Numerical conservation error": mo.ui.matplotlib(ax_cons).center()
+})
+```
 
 ```{python .marimo}
 @dataclass
@@ -520,6 +543,7 @@ class ReactionPreset:
     description: str = field(default="")
     initial_conc: dict[str, float] = field(default_factory=dict)
     parameters: dict[str, float] = field(default_factory=dict)
+    simulation_parameters: dict[str, float] = field(default_factory=dict)
 
     def __getitem__(self, index):
         return self.reactions[index]
@@ -540,13 +564,26 @@ _PRESETS = [
 
     ),
     ReactionPreset(
-        name="Michealis-Menten",
+        name="Michealis-Menten enzyme kinetics",
         reactions=[
             ["E+S", "ES", "k1*E*S", ""],
             ["ES", "E+S", "km1*ES", ""],
             ["ES", "E+P", "kcat*ES", ""]
         ],
-        initial_conc={"E": 0.5, "ES": 0.0, "S": 0.5, "P": 0.0},
+        initial_conc={"E": 5.0, "ES": 0.0, "S": 5.0, "P": 0.0},
+        simulation_parameters = {"tmax": 20, "dt": 0.1},
+        description=MICHEALIS_MENTEN_DESCRIPTION
+    ),
+    ReactionPreset(
+        name="Michealis-Menten enzyme kinetics: Uncompetitive inhibition",
+        reactions=[
+            ["E+S", "ES", "k1*E*S", ""],
+            ["ES", "E+S", "km1*ES", ""],
+            ["ES", "E+P", "kcat*ES", ""],
+            ["ES + I", "ESI", "kIf * ES * I", "kIr * ESI"]
+        ],
+        initial_conc={"E": 5.0, "ES": 0.0, "S": 5.0, "P": 0.0, "ESI": 0.0, "I": 2.5},
+        simulation_parameters = {"tmax": 20, "dt": 0.1},
         description=MICHEALIS_MENTEN_DESCRIPTION
     ),
     ReactionPreset(
@@ -653,16 +690,14 @@ for _idx, quant in enumerate(conserved_quantities):
     _eqs += rf"C_{_idx}&: \quad {sp.latex(quant, symbol_names=network.symbol_names)} \\"
 
 
-# conserved_latex = sp.latex(conserved_quantities[0])
-
-mo.md(rf"""
+conservation_text = rf"""
+The quantities following are preserved throughout the reation
 $$
 \begin{{aligned}}
 {_eqs}
 \end{{aligned}}
 $$
 """
-)
 
 ```
 
@@ -705,20 +740,18 @@ evaluated_conserved_quantities = {
     for expression in conserved_quantities
 }
 
-fig_cons, ax_cons = plt.subplots()
+# fig_cons, ax_cons = plt.subplots()
 
-for expression, values in evaluated_conserved_quantities.items():
-    ax_cons.plot(
-        solution.t,
-        values-values[0],
-        label=rf"${sp.latex(expression)}$",
-    )
+# for expression, values in evaluated_conserved_quantities.items():
+#     ax_cons.plot(
+#         solution.t,
+#         values-values[0],
+#         label=rf"${sp.latex(expression)}$",
+#     )
 
-ax_cons.set_xlabel("Time")
-ax_cons.set_ylabel("Deviation from initial value")
-ax_cons.set_title("Numerical conservation error")
-ax_cons.legend()
-
-mo.ui.matplotlib(ax_cons).center()
+# ax_cons.set_xlabel("Time")
+# ax_cons.set_ylabel("Deviation from initial value")
+# ax_cons.set_title("Numerical conservation error")
+# ax_cons.legend();
 ```
 
