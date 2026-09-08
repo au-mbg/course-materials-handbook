@@ -2,25 +2,41 @@
 title: JupyterLite
 ---
 
-JupyterLite is a browser-based version of Jupyter Notebook / Jupyter Lab. The official documentation can be found [here](https://jupyterlite.readthedocs.io/en/stable/). 
+JupyterLite is a browser-based version of Jupyter Notebook and JupyterLab. The official documentation can be found [here](https://jupyterlite.readthedocs.io/en/stable/).
 
-JupyterLite offers a minimal setup way of running Python, similar to Google Colab but without needing a Google account. 
+JupyterLite provides a low-setup way of running Python, similar to Google Colab but without needing a Google account. Because JupyterLite runs entirely in a web browser, it can also be used on devices that are not normally configured for programming, including tablets, Chromebooks, and phones.
+
+A phone is unlikely to be convenient for writing substantial amounts of code, but a purpose-built notebook can support quick calculations, data checks, and on-the-spot analysis at the laboratory bench. The usability and performance will depend on the notebook design, screen size, browser, and available device memory.
+
+## Try JupyterLite
 
 The JupyterLite instance below opens a short, self-contained sequence-analysis
 notebook demonstrating Biopython, NumPy, pandas, and Matplotlib. The first run
 may take a little while because the packages are downloaded into the browser;
 later runs can reuse the browser's cache.
 
+::: {.column-page-inset-right}
+<figure>
 <iframe
     src="https://au-mbg.github.io/jupyterlite-playground/lab/?fromURL=https%3A%2F%2Fau-mbg.github.io%2Fcourse-materials-handbook%2Fcontent%2Fexamples%2Fjupyterlite_demo.ipynb"
     width="100%"
     height="800"
     title="JupyterLite sequence-analysis demonstration">
 </iframe>
+<figcaption>
+If JupyterLite reports that <code>jupyterlite_demo.ipynb</code> already exists,
+choose <strong>Overwrite</strong> to load the latest published version. Choose
+<strong>Cancel</strong> to retain your locally edited copy, and download it
+before replacing it if you want to keep those changes.
+</figcaption>
+</figure>
+:::
 
 [Open the sequence-analysis notebook in a full browser tab](https://au-mbg.github.io/jupyterlite-playground/lab/?fromURL=https%3A%2F%2Fau-mbg.github.io%2Fcourse-materials-handbook%2Fcontent%2Fexamples%2Fjupyterlite_demo.ipynb){target="_blank"}
 
-For many tasks this is essentially a full fledged Python notebook interface and can for example be used for tasks requiring packages such as 
+## Examples of available packages
+
+For many tasks this is essentially a full-fledged Python notebook interface and can for example be used for tasks requiring packages such as
 
 - [Matplotlib](https://matplotlib.org/stable/): Core plotting library that can be used to make practically any type of scientific plot.
 - [NumPy](https://numpy.org/doc/stable/): Provides efficient numerical calculations with multidimensional arrays.
@@ -37,4 +53,106 @@ For many tasks this is essentially a full fledged Python notebook interface and 
 
 ## Technical details
 
-JupyterLite is a WebAssembly (WASM) compiled version of the JupyterLab distribution, this means it runs in the browser on the client side - so there is no need for a server or any other complicated infrastructure.
+JupyterLite provides the JupyterLab interface as a static web application.
+Python code is executed in the browser by the Pyodide kernel, which uses
+WebAssembly (WASM). This removes the need for a dedicated Jupyter server,
+although the static site and packages still need to be hosted.
+
+### The AU-MBG JupyterLite environment
+
+The JupyterLite environment used on this page is maintained in the
+[AU-MBG JupyterLite playground repository](https://github.com/au-mbg/jupyterlite-playground)
+and published through GitHub Pages. Keeping the environment separate from the
+handbook makes it possible to reuse the same browser-based Python environment
+across several course-material sites while managing its JupyterLite, Pyodide,
+and extension versions centrally.
+
+The deployment includes
+[`jupyterlab-open-url-parameter`](https://jupyterlab-contrib.github.io/jupyterlab-open-url-parameter.html),
+which can open a notebook supplied through the `fromURL` query parameter. In
+the example above, the notebook is generated and hosted by the handbook, while
+the separate JupyterLite deployment provides the interface and Python runtime.
+The notebook is copied into the learner's browser when it is opened, and any
+subsequent edits remain local unless the learner downloads the file.
+
+### Package installation
+
+Package installation works slightly differently in JupyterLite than in a
+regular Python environment. In the Pyodide kernel, packages can be installed
+with `micropip`, for example:
+
+```python
+# In the Pyodide kernel, micropip installs packages compiled for WebAssembly.
+import micropip
+await micropip.install(["biopython", "numpy", "pandas", "matplotlib"])
+```
+
+After the cell has run, the packages are available in the current browser
+environment. The first installation may take a little while, but downloaded
+package files may be cached by the browser.
+
+### Package compatibility
+
+Many pure-Python packages can be installed directly from
+[PyPI](https://pypi.org/) with `micropip`, provided their dependencies are also
+compatible with Pyodide. Many widely used scientific packages that contain
+compiled code are available too, including NumPy, SciPy, pandas, and the
+biology-oriented packages listed above.
+
+The main limitation is that binary packages built for an ordinary desktop or
+server cannot be used unchanged in the browser. Packages containing extensions
+written in languages such as C, C++, Fortran, or Rust need a
+Pyodide-compatible WebAssembly build, as do any compiled dependencies. Packages
+that rely on operating-system features such as external programs or
+subprocesses may also require adaptation.
+
+For most teaching exercises this is a design constraint rather than a major
+obstacle: choose from the broad set of packages already built for Pyodide and
+test the notebook in the deployed JupyterLite environment. If an essential
+package is unavailable, the same exercise can instead be offered through a
+server-backed service or a local Python environment.
+
+The exact package versions available depend on the Pyodide version used by the
+JupyterLite deployment. Consult the
+[Pyodide package list](https://pyodide.org/en/stable/usage/packages-in-pyodide.html)
+and test imports when preparing or updating an exercise.
+
+Some packages, particularly interactive widgets and custom output renderers,
+also require a compatible JupyterLab frontend extension. Installing only the
+Python package may therefore not provide every feature of such a package.
+
+### Browser storage and saving work
+
+Files and notebook changes are saved locally in the browser, usually using
+IndexedDB. They are not automatically uploaded to GitHub or synchronized
+between browsers, devices, or users. Learners should download work they need to
+keep before clearing browser data or moving to another device.
+
+A locally modified copy can take precedence over a newer hosted file with the
+same name. If an updated exercise appears not to have changed, rename or remove
+the older browser copy before opening the exercise again. See the
+[JupyterLite documentation on content and browser storage](https://jupyterlite.readthedocs.io/en/stable/howto/content/files.html)
+for further details.
+
+### Performance and suitable workloads
+
+JupyterLite is well suited to teaching examples, exploratory analysis, and
+small or moderately sized datasets. Computation uses the learner's own device,
+so execution speed and available memory vary between users. Large datasets,
+long-running calculations, and memory-intensive analyses are usually better
+suited to a local Python installation or a server-backed notebook environment.
+
+### Network and system limitations
+
+Code running in Pyodide uses the browser's networking facilities and is subject
+to browser security rules such as Cross-Origin Resource Sharing (CORS). This
+means that an otherwise public data URL may still be inaccessible if its server
+does not permit requests from other websites.
+
+Packages that rely on unrestricted network sockets, external command-line
+programs, subprocesses, threading, or multiprocessing may not behave as they do
+in a conventional Python environment. These restrictions rarely affect the
+small, self-contained exercises for which JupyterLite is intended, but they
+should be considered when adapting an existing analysis. The
+[Pyodide compatibility documentation](https://pyodide.org/en/stable/usage/wasm-constraints.html)
+describes the current platform limitations.
