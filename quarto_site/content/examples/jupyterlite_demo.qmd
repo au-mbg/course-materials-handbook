@@ -1,0 +1,142 @@
+---
+title: "Sequence analysis in JupyterLite"
+format:
+  ipynb: default
+jupyter: python3
+execute:
+  enabled: false
+---
+
+# Sequence analysis in the browser
+
+This short example uses Biopython, NumPy, pandas, and Matplotlib to analyse a
+few synthetic coding sequences. JupyterLite runs Python in your browser: the
+notebook and its files remain in browser storage rather than being sent to a
+notebook server.
+
+The sequences below are deliberately artificial and are intended only to
+demonstrate a reproducible analysis workflow. Run each cell in order.
+
+## Load the packages
+
+The first run may take a little while because Pyodide needs to download the
+packages. Later runs can reuse packages cached by your browser.
+
+```{python}
+# In the Pyodide kernel, micropip installs packages compiled for WebAssembly.
+import micropip
+
+await micropip.install(["biopython", "numpy", "pandas", "matplotlib"])
+```
+
+```{python}
+from io import StringIO
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from Bio import SeqIO
+from Bio.SeqUtils import gc_fraction
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+```
+
+## Parse some synthetic sequences
+
+Biopython can read common formats such as FASTA directly. Here the FASTA data
+are embedded in the notebook, so this example does not need any external data
+files.
+
+```{python}
+fasta_text = """>synthetic_alpha illustrative coding sequence
+ATGGCTGCTGCTGAAGAATTCGGTCCAAAATGGGACTAA
+>synthetic_beta illustrative coding sequence
+ATGAAGTTTGCTGGTGGTTCCTACGAACTGAACGCTAACTGA
+>synthetic_gamma illustrative coding sequence
+ATGCCGATCATCGACAACTTTGCTCGTGAATAG
+>synthetic_delta illustrative coding sequence
+ATGTCTTCTGAACCGAACGGTTATCTGAAAGCTGGTCCATTTTAA
+"""
+
+records = list(SeqIO.parse(StringIO(fasta_text), "fasta"))
+
+for record in records:
+    print(f"{record.id}: {len(record.seq)} nucleotides")
+```
+
+## Calculate sequence and protein properties
+
+Each DNA sequence is translated up to its terminal stop codon. We then use
+Biopython to calculate GC content and two basic properties of the translated
+protein.
+
+```{python}
+rows = []
+
+for record in records:
+    protein = str(record.seq.translate(to_stop=True))
+    protein_analysis = ProteinAnalysis(protein)
+
+    rows.append(
+        {
+            "sequence": record.id,
+            "length_nt": len(record.seq),
+            "gc_percent": 100 * gc_fraction(record.seq),
+            "protein": protein,
+            "protein_length": len(protein),
+            "molecular_weight_da": protein_analysis.molecular_weight(),
+            "aromaticity": protein_analysis.aromaticity(),
+        }
+    )
+
+results = pd.DataFrame(rows).set_index("sequence")
+results.round(2)
+```
+
+## Summarize the measurements with NumPy
+
+```{python}
+gc_values = results["gc_percent"].to_numpy()
+protein_lengths = results["protein_length"].to_numpy()
+
+summary = pd.Series(
+    {
+        "mean GC (%)": np.mean(gc_values),
+        "GC standard deviation": np.std(gc_values),
+        "shortest protein (aa)": np.min(protein_lengths),
+        "longest protein (aa)": np.max(protein_lengths),
+    },
+    name="value",
+)
+summary.round(2)
+```
+
+## Visualize the results
+
+```{python}
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+results["gc_percent"].plot.bar(
+    ax=axes[0], color="#2a9d8f", title="GC content"
+)
+axes[0].set_ylabel("GC content (%)")
+axes[0].set_xlabel("")
+
+results["molecular_weight_da"].plot.bar(
+    ax=axes[1], color="#e76f51", title="Translated protein mass"
+)
+axes[1].set_ylabel("Molecular weight (Da)")
+axes[1].set_xlabel("")
+
+for axis in axes:
+    axis.tick_params(axis="x", labelrotation=35)
+
+fig.tight_layout()
+plt.show()
+```
+
+## Try changing the analysis
+
+1. Change one or more codons in `fasta_text`, rerun the cells, and observe
+   which measurements and plots change.
+2. Add another protein property from `ProteinAnalysis`, such as the predicted
+   isoelectric point, to the results table and create a plot for it.
