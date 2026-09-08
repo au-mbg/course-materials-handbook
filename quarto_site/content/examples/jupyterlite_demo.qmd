@@ -2,7 +2,11 @@
 title: "Sequence analysis in JupyterLite"
 format:
   ipynb: default
-jupyter: python3
+jupyter:
+  kernelspec:
+    name: python
+    language: python
+    display_name: Python (Pyodide)
 execute:
   enabled: false
 ---

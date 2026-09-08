@@ -34,6 +34,21 @@ before replacing it if you want to keep those changes.
 
 [Open the sequence-analysis notebook in a full browser tab](https://au-mbg.github.io/jupyterlite-playground/lab/?fromURL=https%3A%2F%2Fau-mbg.github.io%2Fcourse-materials-handbook%2Fcontent%2Fexamples%2Fjupyterlite_demo.ipynb){target="_blank"}
 
+## Try JupyterLite REPL
+
+JupyterLite also offers a REPL (Read-Eval-Print Loop), similar to what you get
+when you run `python` in a terminal. The REPL from the AU-MBG JupyterLite
+environment is embedded below.
+
+::: {.column-page-inset-right}
+<iframe
+  src="https://au-mbg.github.io/jupyterlite-playground/repl/index.html?kernel=python"
+  width="100%"
+  height="500"
+  title="JupyterLite Python REPL"
+></iframe>
+:::
+
 ## Examples of available packages
 
 For many tasks this is essentially a full-fledged Python notebook interface and can for example be used for tasks requiring packages such as
