@@ -13,6 +13,7 @@ website:
           - content/getting_started/mental_model.qmd
           - content/getting_started/install.qmd
           - content/getting_started/git.qmd
+          - content/getting_started/create-from-template.qmd
           - content/getting_started/open_repository.qmd
 
       - section: "Daily workflow"
@@ -78,4 +79,3 @@ format:
     monofont: "JetBrains Mono, monospace"
     code-fold: show
     code-tools: true
-

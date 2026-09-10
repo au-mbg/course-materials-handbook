@@ -6,6 +6,10 @@ A Quarto course repository usually separates authored content, build
 configuration, support resources, and rendered output. Learn the role of each
 area before deciding where to edit.
 
+For a new course, the [course repository template](../getting_started/create-from-template.qmd)
+provides this recommended structure together with reproducible preview,
+rendering, and publication tasks.
+
 ## Common roles
 
 | Role | Typical files or folders | Edit during ordinary content work? |
