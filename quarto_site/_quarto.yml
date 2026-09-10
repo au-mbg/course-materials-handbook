@@ -37,6 +37,7 @@ website:
           - content/code_interactive/python-code-cells.qmd
           - content/code_interactive/quarto-live-pyodide.qmd
           - content/code_interactive/notebooks.qmd
+          - content/code_interactive/more_interactivity.qmd
 
       - section: "Examples"
         contents:

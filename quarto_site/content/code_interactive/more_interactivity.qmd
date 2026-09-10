@@ -1,0 +1,26 @@
+---
+title: More interactivity
+---
+
+Interactive course material does not have to mean developing a complete web
+application. A responsive plot, an executable code cell, a parameter control,
+a molecular viewer, an animation, or an interactive slide can make an existing
+page more engaging and give learners another way to explore an idea.
+
+Quarto supports these elements within the same source documents used for the
+surrounding course material. Many can therefore be introduced as small additions
+rather than separate software projects. The examples below show some of the
+possibilities and can be copied and adapted to other subjects.
+
+| Possibility | What it can add to the material | Examples |
+|---|---|---|
+| Explore prepared data and visualizations | Learners can zoom, select observations, inspect values, and explore relationships in results that have already been prepared. | [Jupyter Widgets](../examples/jupyter_widgets.qmd), [Observable JS](../examples/observable_js.qmd), and [Marimo data exploration](../examples/marimo/data_exploration.qmd) |
+| Change inputs and see results update | Controls can help learners build intuition by showing immediately how parameters and assumptions affect a result. | [Shiny](../examples/shiny.qmd), [basic reactive Python](../examples/marimo/basic_example.qmd), [numerical integration](../examples/marimo/numerical_integration.qmd), and [chemical reactions](../examples/marimo/reactions.qmd) |
+| Write and execute code in the browser | Learners can experiment without first configuring a local programming environment. | [JupyterLite](../examples/jupyterlite.qmd) and the collection of [Marimo / Reactive Python](../examples/marimo/marimo.qmd) examples |
+| Inspect specialized scientific objects | Interactive scientific viewers can reveal structure and detail that are difficult to communicate with a still image. | [Mol* protein structures](../examples/molstar.qmd) |
+| Make explanations visual and dynamic | Diagrams, animations, and interactive slides can help explain processes, transformations, and sequences. | [Diagrams](../examples/diagrams.qmd), [Manim animations](../examples/manim/manim.qmd), and [Reveal.js slides](../examples/revealjs/revealjs.qmd) |
+| Combine several elements in richer teaching material | A single page can bring together executable analysis, diagrams, parameter controls, and explanatory text. | [Evaluating fits](../examples/fitting/data_fitting.qmd) |
+
+There is no need to make an entire course interactive at once. Start by adding
+one element where exploration or immediate feedback would strengthen an
+explanation, and expand it later if it proves useful.
