@@ -46,6 +46,8 @@ website:
           - content/examples/shiny.qmd
           - content/examples/jupyter_widgets.qmd
           - content/examples/observable_js.qmd
+          - href: content/examples/d3_demo.qmd
+            text: D3.js
           - content/examples/jupyterlite.qmd
           - section: Marimo / Reactive Python
             href: content/examples/marimo/marimo.qmd

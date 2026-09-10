@@ -1,0 +1,355 @@
+---
+title: D3.js
+---
+
+[D3.js](https://d3js.org/) can turn a scientific model into a visual explanation
+that learners can manipulate directly. In Quarto, D3 works particularly well when
+several parts of a figure should respond to the same input, or when the marks in a
+figure need custom appearance, movement, or interaction.
+
+The example below is intentionally modest. It uses radioactive decay as plausible
+course content, but its main purpose is to show a reusable authoring pattern:
+
+- an Observable input controls the state of the explanation;
+- one small data model drives two coordinated views;
+- D3 binds that data to SVG elements and updates them in place; and
+- a transition helps learners see what changed.
+
+## A coordinated interactive figure
+
+Move the slider through five half-lives. The grid shows the state of 100 individual
+nuclei, while the chart shows the same realization as an aggregate count. Select
+**Generate another sample** to see a different stochastic realization without
+changing the theoretical curve.
+
+<style>
+.d3-decay-demo {
+  --d3-decay-accent: #7c3aed;
+  --d3-decay-accent-dark: #5b21b6;
+}
+
+[data-bs-theme="dark"] .d3-decay-demo {
+  --d3-decay-accent: #a78bfa;
+  --d3-decay-accent-dark: #ddd6fe;
+}
+
+.d3-decay-demo input[type="range"] {
+  accent-color: var(--d3-decay-accent);
+}
+
+.d3-decay-demo button {
+  color: #fff;
+  background: #6d28d9;
+  border: 1px solid #5b21b6;
+  border-radius: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  font-weight: 600;
+}
+
+.d3-decay-demo button:hover {
+  color: #fff;
+  background: #5b21b6;
+}
+
+.d3-decay-demo button:focus-visible {
+  outline: 3px solid #c4b5fd;
+  outline-offset: 2px;
+}
+</style>
+
+::: {.d3-decay-demo}
+
+```{ojs}
+//| echo: false
+d3 = require("d3@7")
+```
+
+```{ojs}
+//| echo: false
+viewof time = Inputs.range([0, 5], {
+  value: 0,
+  step: 0.1,
+  label: "Time (half-lives)"
+})
+```
+
+```{ojs}
+//| echo: false
+viewof sample = Inputs.button("Generate another sample", {
+  value: 0,
+  reduce: value => value + 1
+})
+```
+
+```{ojs}
+//| echo: false
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+```
+
+```{ojs}
+//| echo: false
+nuclei = {
+  const random = seededRandom(2027 + sample * 7919);
+  return d3.range(100).map(id => ({
+    id,
+    row: Math.floor(id / 10),
+    column: id % 10,
+    decayTime: -Math.log2(1 - random())
+  }));
+}
+```
+
+```{ojs}
+//| echo: false
+observed = d3.range(0, 5.001, 0.05).map(t => ({
+  time: t,
+  remaining: nuclei.filter(d => d.decayTime > t).length
+}))
+```
+
+```{ojs}
+//| echo: false
+chartState = {
+  const width = 900;
+  const height = 420;
+  const grid = {x: 42, y: 92, spacing: 27};
+  const plot = {left: 405, right: 868, top: 78, bottom: 350};
+  const x = d3.scaleLinear([0, 5], [plot.left, plot.right]);
+  const y = d3.scaleLinear([0, 100], [plot.bottom, plot.top]);
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const svg = d3.create("svg")
+    .attr("viewBox", [0, 0, width, height])
+    .attr("role", "img")
+    .attr("aria-labelledby", "decay-title decay-description")
+    .style("display", "block")
+    .style("width", "100%")
+    .style("height", "auto")
+    .style("max-width", "900px")
+    .style("font-family", "var(--bs-body-font-family, sans-serif)");
+
+  svg.append("title")
+    .attr("id", "decay-title")
+    .text("Interactive radioactive decay realization");
+  const description = svg.append("desc").attr("id", "decay-description");
+
+  svg.append("rect")
+    .attr("x", 1).attr("y", 1)
+    .attr("width", width - 2).attr("height", height - 2)
+    .attr("rx", 8)
+    .attr("fill", "var(--bs-body-bg, white)")
+    .attr("stroke", "var(--bs-border-color, #ced4da)");
+
+  svg.append("text")
+    .attr("x", grid.x).attr("y", 46)
+    .attr("font-size", 17).attr("font-weight", 650)
+    .attr("fill", "currentColor").text("Individual nuclei");
+
+  const countLabel = svg.append("text")
+    .attr("x", grid.x).attr("y", 70)
+    .attr("font-size", 14).attr("fill", "currentColor");
+
+  const circles = svg.append("g")
+    .attr("aria-hidden", "true")
+    .selectAll("circle")
+    .data(nuclei, d => d.id)
+    .join("circle")
+    .attr("cx", d => grid.x + d.column * grid.spacing)
+    .attr("cy", d => grid.y + d.row * grid.spacing)
+    .attr("r", 9).attr("stroke-width", 2);
+
+  svg.append("text")
+    .attr("x", plot.left).attr("y", 46)
+    .attr("font-size", 17).attr("font-weight", 650)
+    .attr("fill", "currentColor").text("The same sample, summarized");
+
+  svg.append("g")
+    .attr("transform", `translate(0,${plot.bottom})`)
+    .call(d3.axisBottom(x).ticks(5))
+    .call(g => g.selectAll("path,line").attr("stroke", "currentColor"))
+    .call(g => g.selectAll("text").attr("fill", "currentColor"));
+
+  svg.append("g")
+    .attr("transform", `translate(${plot.left},0)`)
+    .call(d3.axisLeft(y).ticks(5))
+    .call(g => g.selectAll("path,line").attr("stroke", "currentColor"))
+    .call(g => g.selectAll("text").attr("fill", "currentColor"));
+
+  svg.append("text")
+    .attr("x", (plot.left + plot.right) / 2).attr("y", 397)
+    .attr("text-anchor", "middle").attr("font-size", 13)
+    .attr("fill", "currentColor").text("Time (half-lives)");
+
+  svg.append("text")
+    .attr("transform", `translate(365,${(plot.top + plot.bottom) / 2}) rotate(-90)`)
+    .attr("text-anchor", "middle").attr("font-size", 13)
+    .attr("fill", "currentColor").text("Nuclei remaining");
+
+  const theoretical = d3.range(0, 5.001, 0.05).map(t => ({
+    time: t,
+    remaining: 100 * 2 ** (-t)
+  }));
+  const line = d3.line().x(d => x(d.time)).y(d => y(d.remaining));
+
+  svg.append("path")
+    .datum(theoretical)
+    .attr("fill", "none").attr("stroke", "#73777b")
+    .attr("stroke-width", 2.5).attr("stroke-dasharray", "7,5")
+    .attr("d", line);
+
+  svg.append("path")
+    .datum(observed)
+    .attr("fill", "none").attr("stroke", "var(--d3-decay-accent, #7c3aed)")
+    .attr("stroke-width", 3)
+    .attr("d", line.curve(d3.curveStepAfter));
+
+  const marker = svg.append("line")
+    .attr("y1", plot.top).attr("y2", plot.bottom)
+    .attr("stroke", "#d65f4a").attr("stroke-width", 2);
+
+  const observedDot = svg.append("circle")
+    .attr("r", 5.5).attr("fill", "#d65f4a")
+    .attr("stroke", "var(--bs-body-bg, white)").attr("stroke-width", 2);
+
+  const valueLabel = svg.append("text")
+    .attr("x", plot.right).attr("y", 68)
+    .attr("text-anchor", "end").attr("font-size", 13)
+    .attr("fill", "currentColor");
+
+  const legend = svg.append("g")
+    .attr("transform", `translate(${plot.left + 12},${plot.bottom + 28})`)
+    .attr("font-size", 12).attr("fill", "currentColor");
+  legend.append("line").attr("x2", 25)
+    .attr("stroke", "var(--d3-decay-accent, #7c3aed)").attr("stroke-width", 3);
+  legend.append("text").attr("x", 32).attr("y", 4).text("Observed sample");
+  legend.append("line").attr("x1", 145).attr("x2", 170)
+    .attr("stroke", "#73777b").attr("stroke-width", 2.5)
+    .attr("stroke-dasharray", "7,5");
+  legend.append("text").attr("x", 177).attr("y", 4).text("Theoretical trend");
+
+  return {node: svg.node(), description, circles, countLabel, marker,
+    observedDot, valueLabel, x, y, reducedMotion};
+}
+```
+
+```{ojs}
+//| echo: false
+decayFigure = {
+  const remaining = nuclei.filter(d => d.decayTime > time).length;
+  const expected = 100 * 2 ** (-time);
+  const duration = chartState.reducedMotion ? 0 : 220;
+
+  chartState.circles.interrupt().transition().duration(duration)
+    .attr("r", d => d.decayTime > time ? 9 : 5)
+    .attr("fill", d => d.decayTime > time ? "var(--d3-decay-accent, #7c3aed)" : "#adb5bd")
+    .attr("stroke", d => d.decayTime > time ? "var(--d3-decay-accent-dark, #5b21b6)" : "#6c757d")
+    .attr("opacity", d => d.decayTime > time ? 1 : 0.28);
+
+  chartState.countLabel.text(`${remaining} of 100 remain`);
+  chartState.marker.attr("x1", chartState.x(time)).attr("x2", chartState.x(time));
+  chartState.observedDot
+    .attr("cx", chartState.x(time)).attr("cy", chartState.y(remaining));
+  chartState.valueLabel.text(`Observed ${remaining} · expected ${expected.toFixed(1)}`);
+  chartState.description.text(
+    `At ${time.toFixed(1)} half-lives, ${remaining} of 100 nuclei remain; ` +
+    `the theoretical expectation is ${expected.toFixed(1)}.`
+  );
+  return chartState.node;
+}
+```
+
+:::
+
+The fading circles and the step-shaped line are not independent illustrations.
+They are two views of the same array of 100 objects, so selecting a new time or
+sample keeps every part of the explanation consistent.
+
+## The reusable pattern
+
+Quarto provides the reactive layer through Observable JS. The input values
+`time` and `sample` become ordinary variables, and cells that use them are
+automatically recalculated. D3 provides the lower-level control over the SVG.
+
+First, load D3 and create a control:
+
+````markdown
+```{ojs}
+d3 = require("d3@7")
+
+viewof time = Inputs.range([0, 5], {
+  value: 0,
+  step: 0.1,
+  label: "Time (half-lives)"
+})
+```
+````
+
+Each nucleus is represented by one object. Its position is fixed, while its
+randomly generated `decayTime` determines its state at any selected time:
+
+````markdown
+```{ojs}
+nuclei = {
+  const random = seededRandom(2027);
+  return d3.range(100).map(id => ({
+    id,
+    row: Math.floor(id / 10),
+    column: id % 10,
+    decayTime: -Math.log2(1 - random())
+  }));
+}
+```
+````
+
+D3's data join creates one SVG circle per object. The `id` key keeps the link
+between an object and its circle explicit:
+
+```javascript
+const circles = svg.append("g")
+  .selectAll("circle")
+  .data(nuclei, d => d.id)
+  .join("circle")
+  .attr("cx", d => grid.x + d.column * grid.spacing)
+  .attr("cy", d => grid.y + d.row * grid.spacing)
+  .attr("r", 9);
+```
+
+When `time` changes, the SVG is retained and its existing circles are updated.
+Interrupting an unfinished transition makes rapid slider movement behave cleanly:
+
+```javascript
+circles
+  .interrupt()
+  .transition()
+  .duration(220)
+  .attr("r", d => d.decayTime > time ? 9 : 5)
+  .attr("opacity", d => d.decayTime > time ? 1 : 0.28);
+```
+
+This separation is useful in larger examples: create the SVG structure once,
+then write a small update step that maps the current reactive state onto it.
+
+## Why use D3 here?
+
+For a conventional scatter plot or bar chart, a higher-level tool such as
+Observable Plot will usually require less code. D3 becomes attractive when the
+teaching idea calls for custom visual marks, transitions, direct manipulation,
+or several views that must update together.
+
+The same pattern could be adapted without changing its overall architecture:
+
+- nuclei could become cells surviving a treatment;
+- discrete states could show molecules binding or changing conformation;
+- a grid and summary could reveal repeated samples from a distribution;
+- individuals could move between states in a population model; or
+- marks could represent items moving through the steps of an algorithm.
+
+The strongest use of interactivity is not simply to make a figure move. It is to
+let learners change something meaningful and immediately see the consequences
+in representations that support the intended explanation.
