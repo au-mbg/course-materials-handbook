@@ -38,16 +38,141 @@ before replacing it if you want to keep those changes.
 
 JupyterLite also offers a REPL (Read-Eval-Print Loop), similar to what you get
 when you run `python` in a terminal. The REPL from the AU-MBG JupyterLite
-environment is embedded below.
+environment is embedded below. The examples below suggest small tasks to try
+in the REPL.
 
 ::: {.column-page-inset-right}
 <iframe
   src="https://au-mbg.github.io/jupyterlite-playground/repl/index.html?kernel=python"
   width="100%"
-  height="500"
+  height="400"
   title="JupyterLite Python REPL"
 ></iframe>
 :::
+
+::: {.callout-tip title="REPL Usage" collapse="true"}
+The REPL is a low-friction way to run code: students can begin experimenting
+without creating a file or navigating a notebook. It opens without any
+exercise content or pre-written cells. This lack of visible scaffolding can be
+useful when the aim is to have students write a small amount of code themselves
+rather than only run code that has already been provided.
+
+A notebook can also begin with an empty cell, but the REPL invites a different
+kind of scaffolding. Instructions can introduce a task one small step at a
+time, with each expression entered and evaluated in sequence. The resulting
+feedback can guide the student's next step.
+
+Like the terminal REPL (`python`), it is intended primarily for temporary
+work. For work that must be saved, shared, or reproduced, transfer the code to
+a notebook or script.
+:::
+
+::: {.callout-tip title="REPL Calculation example" collapse="true"}
+
+The REPL can be used to gain intuition about an equation. Consider, for
+example,
+
+$$
+A(t) = A_0 e^{-kt}
+$$
+
+Ask students what role $A_0$ plays, and guide them through the exploration one
+step at a time:
+
+1. Import NumPy using the conventional abbreviation `np`.
+2. Create an array named `t` containing the integers from 0 through 5. The
+   function `np.arange` may be useful here.
+3. Assign the value 0.5 to `k` and the value 2 to `A0`.
+4. Translate the equation into a Python expression. NumPy provides
+   `np.exp(...)` for the exponential function.
+5. Change `A0` to 1 and then to 5, evaluating the expression after each
+   change.
+
+Then ask:
+
+- What changes when $A_0$ changes?
+- Does the rate of decay change?
+- Try changing $k$ instead. How is its effect different from changing $A_0$?
+
+This lets students discover that $A_0$ determines the starting value, whereas
+$k$ determines the rate of decay.
+
+#### Possible solution
+
+Authors and instructors can paste the following complete example into the REPL
+to try the exercise themselves:
+
+```python
+import numpy as np
+
+t = np.arange(0, 6)
+k = 0.5
+A0 = 2
+A0 * np.exp(-k * t)
+
+A0 = 1
+A0 * np.exp(-k * t)
+
+A0 = 5
+A0 * np.exp(-k * t)
+
+k = 1
+A0 * np.exp(-k * t)
+```
+:::
+
+::: {.callout-tip title="REPL Plotting example" collapse="true"}
+
+Ask students to plot the following small sample from the relationship
+$y=x^2$:
+
+| x   | y   |
+|-----|-----|
+| 1   | 1   |
+| 2   | 4   |
+| 3   | 9   |
+| 4   | 16  |
+| 5   | 25  |
+
+Before plotting, ask students to predict the value of $y$ when $x=6$. Then
+guide them through the task:
+
+1. Import `matplotlib.pyplot` using the conventional abbreviation `plt`.
+2. Enter the values from each table column as lists named `x` and `y`.
+3. Create a figure and axes with `plt.subplots()`.
+4. Use the axes method `scatter` to plot `x` against `y`, then display the
+   figure with `plt.show()`.
+5. Add the predicted point to both lists and make the plot again.
+
+How much syntax to provide is itself a scaffolding choice. For beginners, a
+method name or partial expression may be enough to unblock the next step
+without supplying a complete solution to copy.
+
+#### Possible solution
+
+Authors and instructors can paste the following complete example into the REPL
+to try the exercise themselves:
+
+```python
+import matplotlib.pyplot as plt
+
+x = [1, 2, 3, 4, 5]
+y = [1, 4, 9, 16, 25]
+
+fig, ax = plt.subplots(figsize=(3, 3))
+ax.scatter(x, y)
+plt.show()
+
+x.append(6)
+y.append(36)
+
+fig, ax = plt.subplots(figsize=(3, 3))
+ax.scatter(x, y)
+plt.show()
+```
+
+:::
+
 
 ## Examples of available packages
 
