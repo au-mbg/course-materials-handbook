@@ -1,0 +1,620 @@
+---
+title: Scaffolded Python Exercises
+format: 
+  live-html:
+    theme:
+      light: [flatly, ../../../styles.scss]
+      dark: [darkly, ../../../styles.scss]
+    css: ../../../styles.css
+    toc: true
+    mainfont: "inter, sans-serif"
+    monofont: "JetBrains Mono, monospace"
+code-annotations: hover
+pyodide:
+  packages:
+    - matplotlib
+    - numpy
+    - scipy
+---
+
+The [Quarto Live authoring guide](../../code_interactive/quarto-live-pyodide.qmd)
+shows how to embed interactive computation directly in a web page. This example
+uses Python exercises to demonstrate progressively richer forms of scaffolding
+and automated feedback.
+
+Unlike a full notebook or REPL, the code cells sit alongside the explanation
+and can be tailored to one specific learning task.
+
+## Example: Implementing a function
+
+It can often be illustrative to have students implement some equation as a function and then exploring that function in some ways. Consider for example the function, 
+
+$$
+f(x) = (x^2 + y - 11)^2 + (x + y^2 - 7)^2.
+$$
+This is [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau's_function)[^1]. A lot can go wrong in the implementation of this function and subsequent exercises may become difficult if it's not done correctly - we can use interactive Python cells that give learners immediate feedback to alleviate that. 
+
+```{pyodide}
+#| exercise: himmelblau_function
+#| setup: true
+import numpy as np
+```
+
+```{pyodide}
+#| exercise: himmelblau_function
+def himmelblau(x, y) -> float:
+    """
+    Implements Himmelblau's function.
+    """
+    result = ______
+    return result
+```
+
+```{pyodide}
+#| exercise: himmelblau_function
+#| check: true
+def correct_himmelblau(x, y):
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
+
+test_points = [(3.0, 2.0), (-2.805118, 3.131312), (0, 0)]
+correct = True
+failures = []
+for test_point in test_points:
+    student_eval = himmelblau(*test_point)
+    correct_eval = correct_himmelblau(*test_point)
+    if not np.isclose(student_eval, correct_eval):
+        correct = False
+        failures.append((test_point, correct_eval, student_eval))
+if correct:
+    feedback = {
+        "correct": True,
+        "message": "That is correct!"
+    }
+else:
+    lines = ["That is not correct. Please try again."]
+
+    for point, expected, student in failures:
+        lines.append(
+            f"At ({point[0]}, {point[1]}), the function should return "
+            f"{expected:.3f}; yours returns {student:.3f}."
+        )
+
+    feedback = {
+        "correct": False,
+        "message": "<br>".join(lines)
+    }
+
+feedback
+```
+
+This example uses the following code: 
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Setup cell that imports numpy.
+
+#| exercise: himmelblau_function
+#| setup: true
+import numpy as np
+```
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Exercise cell with scaffolded function.
+
+#| exercise: himmelblau_function
+def himmelblau(x, y) -> float:
+    """
+    Implements Himmelblau's function.
+    """
+    result = ______
+    return result
+```
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Feedback cell with custom feedback logic
+
+#| exercise: himmelblau_function
+def correct_himmelblau(x, y):
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2 # <1>
+
+test_points = [(3.0, 2.0), (-2.805118, 3.131312), (0, 0)]
+correct = True
+failures = []
+for test_point in test_points: # <2>
+    student_eval = himmelblau(*test_point)
+    correct_eval = correct_himmelblau(*test_point)
+    if not np.isclose(student_eval, correct_eval):
+        correct = False
+        failures.append((test_point, correct_eval, student_eval))
+
+if correct: # <3> 
+    feedback = {
+        "correct": True,
+        "message": "That is correct!"
+    }
+else: # <4>
+    lines = ["That is not correct. Please try again."]
+
+    for point, expected, student in failures:
+        lines.append(
+            f"At ({point[0]}, {point[1]}), the function should return "
+            f"{expected:.3f}; yours returns {student:.3f}."
+        )
+
+    feedback = {
+        "correct": False,
+        "message": "<br>".join(lines)
+    }
+
+feedback
+```
+1. Correct implementation of the Himmelblau function
+2. Tests the students version against the correct version for three sets of coordinates.
+3. The feedback message shown if the student's version is correct.
+4. The feedback message shown if the student's version is incorrect.
+
+Note that all three cells have the same `#| exercise: himmelblau_function` metadata line, with the `#| setup` and `#| check` cells been additional identifiers for the setup and feedback cells. 
+
+### Example: Using a function
+
+We could build further on the previous exercise by asking students to use `scipy.optimize.minimize` to find a local minimum of Himmelblau's function. 
+
+The cell below expects `local_minimum` to be set to one of the four minima of the function. 
+
+
+```{pyodide}
+#| exercise: himmelblau_opt
+#| setup: true
+
+import numpy as np
+from scipy.optimize import minimize
+
+def himmelblau(x):
+    return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
+```
+
+```{pyodide}
+#| exercise: himmelblau_opt
+# Use the minimize-function to find a local minimum of the Himmelblau function
+
+local_minimum = _______
+```
+
+```{pyodide}
+#| exercise: himmelblau_opt
+#| check: true
+
+local_minima = [
+    (3.0, 2.0),
+    (-2.805118, 3.131312),
+    (-3.779310, -3.283186),
+    (3.584428, -1.848126)
+    ]
+
+match_found = False
+for (lx, ly) in local_minima:
+    if np.isclose(lx, local_minimum[0]) and np.isclose(ly, local_minimum[1]):
+        match_found = True
+        break
+
+if match_found:
+    feedback = {"correct": True, "message": f"That's correct! ({lx}, {ly}) is a minimum of Himmelblau's function"}
+else:
+    feedback = {"correct": False, "message": "That's not quite right."}
+
+feedback
+```
+
+::: {.hint exercise="himmelblau_opt"}
+::: {.callout-tip collapse="false"}
+## Hint 1
+Use the `minimize`-function to find a minimum, the syntax is
+```python
+result = minimize(f, [0, 0])
+```
+Where the first argument `f` is the function to be minimized and second are
+the initial starting coordinates. 
+
+The function returns a `OptimizeResult`-object that stores information about the found solution and about the optimization process. The coordinates can be extracted like so
+
+```python
+local_minimum = result.x
+```
+
+:::
+:::
+
+::: { .solution exercise="himmelblau_opt" }
+::: {.callout-tip collapse="false"}
+## Solution
+
+The exercise can be solved with 
+
+```python
+local_minimum = minimize(himmelblau, [0, 0]).x
+```
+
+Try varying the initial coordinates.
+
+:::
+:::
+
+
+This again uses a setup, exercise and check cell. These are shown below
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Setup cell with imports and Himmelblau function definition.
+
+#| exercise: himmelblau_opt
+#| setup: true
+import numpy as np
+from scipy.optimize import minimize
+
+def himmelblau(x): # <1>
+    return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
+```
+1. Vectorized version of the Himmelblau function. This form is required for `minimize`. 
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Exercise cell
+
+#| exercise: himmelblau_opt
+# Use the minimize-function to find a local minimum of the Himmelblau function
+
+local_minimum = _______
+```
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Check cell that compares the found minimum with the four correct minima.
+
+#| exercise: himmelblau_opt
+#| check: true
+local_minima = [
+    (3.0, 2.0),
+    (-2.805118, 3.131312),
+    (-3.779310, -3.283186),
+    (3.584428, -1.848126)
+    ]
+
+match_found = False
+for (lx, ly) in local_minima:
+    if np.isclose(lx, local_minimum[0]) and np.isclose(ly, local_minimum[1]):
+        match_found = True
+        break
+
+if match_found:
+    feedback = {"correct": True, "message": f"That's correct! ({lx}, {ly}) is a minimum of Himmelblau's function"}
+else:
+    feedback = {"correct": False, "message": "That's not quite right."}
+
+feedback
+```
+
+Addittionally the hints and solutions for this exercise are defined by blocks like so 
+
+````{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Defining a hint for the exercise, multiple hints can be defined by adding additionally blocks with of the same structure.
+
+::: {.hint exercise="himmelblau_opt"}
+::: {.callout-tip collapse="false"}
+## Hint 1
+Use the `minimize`-function to find a minimum, the syntax is
+```python
+result = minimize(f, [0, 0])
+```
+Where the first argument `f` is the function to be minimized and second are
+the initial starting coordinates. 
+
+The function returns a `OptimizeResult`-object that stores information about the found solution and about the optimization process. The coordinates can be extracted like so
+
+```python
+local_minimum = result.x
+```
+
+:::
+:::
+````
+
+````{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Defining a solution for the exercise.
+
+::: { .solution exercise="himmelblau_opt" }
+::: {.callout-tip collapse="false"}
+## Solution
+
+The exercise can be solved with 
+
+```python
+local_minimum = minimize(himmelblau, [0, 0]).x
+```
+
+Try varying the initial coordinates.
+
+:::
+:::
+````
+
+
+
+### Example: Plotting a function
+
+The previous exercises evaluated Himmelblau's function and located one of its
+minima. A plot can make the shape of the function, and the presence of several
+minima, easier to understand. In this exercise, students create a filled contour
+plot over the interval $-5 \leq x \leq 5$ and $-5 \leq y \leq 5$.
+
+Complete the code to evaluate the function on a grid and create the plot. The
+finished figure should include a colour bar, the title `Himmelblau's function`,
+and axes labelled `x` and `y`.
+
+```{pyodide}
+#| exercise: himmelblau_plot
+#| setup: true
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def himmelblau(x, y):
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
+```
+
+```{pyodide}
+#| exercise: himmelblau_plot
+x = np.linspace(-5, 5, 200)
+y = np.linspace(-5, 5, 200)
+X, Y = np.meshgrid(______, ______)
+Z = himmelblau(______, ______)
+
+fig, ax = plt.subplots()
+contours = ax.contourf(______, ______, ______, levels=30)
+fig.colorbar(contours, ax=ax, label="f(x, y)")
+
+# Customization; labels, title, colorbar
+______
+
+plt.show()
+```
+
+```{pyodide}
+#| exercise: himmelblau_plot
+#| check: true
+
+checks = []
+
+try:
+    grid_is_correct = (
+        isinstance(X, np.ndarray)
+        and isinstance(Y, np.ndarray)
+        and X.shape == Y.shape == (200, 200)
+        and np.isclose(X.min(), -5)
+        and np.isclose(X.max(), 5)
+        and np.isclose(Y.min(), -5)
+        and np.isclose(Y.max(), 5)
+    )
+except (NameError, AttributeError, TypeError):
+    grid_is_correct = False
+checks.append((
+    grid_is_correct,
+    "Create X and Y as a 200 × 200 mesh grid spanning -5 to 5 on both axes."
+))
+
+try:
+    expected_Z = himmelblau(X, Y)
+    values_are_correct = (
+        isinstance(Z, np.ndarray)
+        and Z.shape == expected_Z.shape
+        and np.allclose(Z, expected_Z)
+    )
+except (NameError, AttributeError, TypeError, ValueError):
+    values_are_correct = False
+checks.append((
+    values_are_correct,
+    "Evaluate Himmelblau's function on the complete grid and store the result in Z."
+))
+
+try:
+    contour_is_present = (
+        contours.axes is ax
+        and len(ax.collections) > 0
+    )
+except (NameError, AttributeError, TypeError):
+    contour_is_present = False
+checks.append((
+    contour_is_present,
+    "Create a filled contour plot on ax and store it in contours."
+))
+
+try:
+    colour_bar_is_present = len(fig.axes) >= 2
+except (NameError, AttributeError, TypeError):
+    colour_bar_is_present = False
+checks.append((
+    colour_bar_is_present,
+    "Add a colour bar to the figure."
+))
+
+try:
+    x_label_is_correct = ax.get_xlabel().strip().lower() == "x"
+except (NameError, AttributeError):
+    x_label_is_correct = False
+checks.append((
+    x_label_is_correct,
+    "Label the horizontal axis x."
+))
+
+try:
+    y_label_is_correct = ax.get_ylabel().strip().lower() == "y"
+except (NameError, AttributeError):
+    y_label_is_correct = False
+checks.append((
+    y_label_is_correct,
+    "Label the vertical axis y."
+))
+
+try:
+    title_is_correct = ax.get_title().strip() == "Himmelblau's function"
+except (NameError, AttributeError):
+    title_is_correct = False
+checks.append((
+    title_is_correct,
+    "Set the title to Himmelblau's function."
+))
+
+failed_checks = [message for passed, message in checks if not passed]
+
+if not failed_checks:
+    feedback = {
+        "correct": True,
+        "message": "That is correct! The plot contains the requested data and labels."
+    }
+else:
+    feedback = {
+        "correct": False,
+        "message": "Please revise the following:<br>" + "<br>".join(
+            f"- {message}" for message in failed_checks
+        )
+    }
+
+feedback
+```
+
+The setup, exercise, and check cells used for this example are shown below.
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Setup cell with imports and Himmelblau function definition.
+
+#| exercise: himmelblau_plot
+#| setup: true
+import numpy as np
+import matplotlib.pyplot as plt
+
+def himmelblau(x, y):
+    return (x**2 + y - 11)**2 + (x + y**2 - 7)**2
+```
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Exercise cell for creating a filled contour plot.
+
+#| exercise: himmelblau_plot
+x = np.linspace(-5, 5, 200)
+y = np.linspace(-5, 5, 200)
+X, Y = np.meshgrid(______, ______)
+Z = himmelblau(______, ______)
+
+fig, ax = plt.subplots()
+contours = ax.contourf(______, ______, ______, levels=30)
+fig.colorbar(contours, ax=ax, label="f(x, y)")
+ax.set_xlabel(______)
+ax.set_ylabel(______)
+ax.set_title(______)
+plt.show()
+```
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Check cell that validates the grid, plot, colour bar, and labels.
+
+#| exercise: himmelblau_plot
+#| check: true
+checks = []
+
+try:
+    grid_is_correct = (
+        isinstance(X, np.ndarray)
+        and isinstance(Y, np.ndarray)
+        and X.shape == Y.shape == (200, 200)
+        and np.isclose(X.min(), -5)
+        and np.isclose(X.max(), 5)
+        and np.isclose(Y.min(), -5)
+        and np.isclose(Y.max(), 5)
+    )
+except (NameError, AttributeError, TypeError):
+    grid_is_correct = False
+checks.append((grid_is_correct, "Create the required X and Y mesh grid."))
+
+try:
+    expected_Z = himmelblau(X, Y)
+    values_are_correct = (
+        isinstance(Z, np.ndarray)
+        and Z.shape == expected_Z.shape
+        and np.allclose(Z, expected_Z)
+    )
+except (NameError, AttributeError, TypeError, ValueError):
+    values_are_correct = False
+checks.append((values_are_correct, "Evaluate the function on the grid."))
+
+try:
+    contour_is_present = contours.axes is ax and len(ax.collections) > 0
+except (NameError, AttributeError, TypeError):
+    contour_is_present = False
+checks.append((contour_is_present, "Create a filled contour plot on ax."))
+
+try:
+    colour_bar_is_present = len(fig.axes) >= 2
+except (NameError, AttributeError, TypeError):
+    colour_bar_is_present = False
+checks.append((colour_bar_is_present, "Add a colour bar to the figure."))
+
+try:
+    x_label_is_correct = ax.get_xlabel().strip().lower() == "x"
+except (NameError, AttributeError):
+    x_label_is_correct = False
+checks.append((x_label_is_correct, "Label the horizontal axis x."))
+
+try:
+    y_label_is_correct = ax.get_ylabel().strip().lower() == "y"
+except (NameError, AttributeError):
+    y_label_is_correct = False
+checks.append((y_label_is_correct, "Label the vertical axis y."))
+
+try:
+    title_is_correct = ax.get_title().strip() == "Himmelblau's function"
+except (NameError, AttributeError):
+    title_is_correct = False
+checks.append((title_is_correct, "Set the requested title."))
+
+failed_checks = [message for passed, message in checks if not passed]
+
+if not failed_checks:
+    feedback = {
+        "correct": True,
+        "message": "That is correct! The plot contains the requested data and labels."
+    }
+else:
+    feedback = {
+        "correct": False,
+        "message": "Please revise the following:<br>" + "<br>".join(
+            f"- {message}" for message in failed_checks
+        )
+    }
+
+feedback
+```
+
+The checker tests the numerical grid and function values as well as the visible
+parts of the figure. In particular, it verifies that the learner created a
+filled contour plot, added a colour bar, labelled both axes, and supplied the
+requested title. Reporting each failed check separately makes the feedback
+specific without revealing the completed exercise code.
+
+[^1]: This is a function used for testing optimization algortihms. 

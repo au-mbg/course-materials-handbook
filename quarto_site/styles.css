@@ -1,1 +1,61 @@
 /* css styles */
+.upload-panel {
+  margin: 1rem 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(127, 127, 127, 0.28);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.upload-panel .observablehq {
+  margin: 0;
+}
+
+.upload-panel label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.upload-panel input[type="file"] {
+  max-width: 100%;
+  color: inherit;
+}
+
+.upload-panel input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+}
+
+.quarto-light .upload-panel {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.quarto-dark .upload-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 600px) {
+  .upload-panel .observablehq form {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .upload-panel .observablehq form > label {
+    width: auto;
+    white-space: normal;
+  }
+
+  .upload-panel .observablehq form > div {
+    width: 100%;
+  }
+}

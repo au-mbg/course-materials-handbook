@@ -49,6 +49,11 @@ website:
           - href: content/examples/d3_demo.qmd
             text: D3.js
           - content/examples/jupyterlite.qmd
+          - section: Embedded Interactive Computation
+            href: content/examples/embedded_python.qmd
+            contents:
+              - content/examples/embedded_computation/python_exercises.qmd
+              - content/examples/embedded_computation/data_upload.qmd
           - section: Marimo / Reactive Python
             href: content/examples/marimo/marimo.qmd
             contents:

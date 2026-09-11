@@ -1,0 +1,257 @@
+---
+title: Analysing Uploaded Data
+format:
+  live-html:
+    theme:
+      light: [flatly, ../../../styles.scss]
+      dark: [darkly, ../../../styles.scss]
+    css: ../../../styles.css
+    toc: true
+    mainfont: "inter, sans-serif"
+    monofont: "JetBrains Mono, monospace"
+pyodide:
+  packages:
+    - matplotlib
+    - numpy
+    - openpyxl
+    - pandas
+code-annotations: hover
+code-tools: true
+---
+
+Course material can let learners analyse their own data without requiring them
+to install Python or upload the data to a server. In this example, Observable
+JavaScript (OJS) provides a file picker and Quarto Live passes the selected
+workbook to Python running locally in the browser.
+
+## Try the example
+
+Download the [example measurements workbook](example_measurements.xlsx), then
+select it below. You can also use your own `.xlsx` file if it contains these
+columns in its first worksheet:
+
+| Column | Contents |
+|---|---|
+| `sample` | A name identifying each sample |
+| `measurement_1` | First replicate measurement |
+| `measurement_2` | Second replicate measurement |
+| `measurement_3` | Third replicate measurement |
+
+::: {.callout-note title="Your data stays in your browser"}
+The selected file is read and analysed on your device. This example does not
+send the workbook to a server or save it after the page is closed.
+:::
+
+::: {.upload-panel}
+
+```{ojs}
+//| echo: false
+viewof workbook_file = Inputs.file({
+  label: "Select an Excel workbook",
+  accept: ".xlsx",
+  required: false
+})
+
+workbook_name = workbook_file ? workbook_file.name : null
+workbook_bytes = workbook_file
+  ? Array.from(new Uint8Array(await workbook_file.arrayBuffer()))
+  : null
+```
+
+:::
+
+```{pyodide}
+#| echo: false
+#| edit: false
+#| input:
+#|   - workbook_bytes
+#|   - workbook_name
+
+import io
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from IPython.display import display
+
+required_columns = [
+    "sample",
+    "measurement_1",
+    "measurement_2",
+    "measurement_3",
+]
+measurement_columns = required_columns[1:]
+
+
+def is_missing(value):
+    return value is None or type(value).__name__ in {"JsNull", "JsUndefined"}
+
+
+if is_missing(workbook_bytes):
+    print("Select an Excel workbook to begin the analysis.")
+else:
+    try:
+        data = pd.read_excel(io.BytesIO(bytes(workbook_bytes)))
+
+        missing_columns = [
+            column for column in required_columns if column not in data.columns
+        ]
+        if missing_columns:
+            missing = ", ".join(f"`{column}`" for column in missing_columns)
+            raise ValueError(f"Missing required columns: {missing}.")
+
+        data = data.loc[:, required_columns].copy()
+        if data.empty:
+            raise ValueError("The workbook contains no measurement rows.")
+        if data["sample"].isna().any() or (data["sample"].astype(str).str.strip() == "").any():
+            raise ValueError("Every row must have a value in the `sample` column.")
+
+        for column in measurement_columns:
+            converted = pd.to_numeric(data[column], errors="coerce")
+            invalid = converted.isna()
+            if invalid.any():
+                rows = ", ".join(str(index + 2) for index in data.index[invalid])
+                raise ValueError(
+                    f"Column `{column}` contains a missing or non-numeric value "
+                    f"in spreadsheet row(s): {rows}."
+                )
+            data[column] = converted
+
+        data["mean"] = data[measurement_columns].mean(axis=1)
+        data["standard_deviation"] = data[measurement_columns].std(axis=1)
+
+        print(f"Loaded: {workbook_name}")
+        print(f"Rows: {len(data)}")
+        display(data.round(3))
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        positions = np.arange(len(data))
+        ax.errorbar(
+            positions,
+            data["mean"],
+            yerr=data["standard_deviation"],
+            fmt="o",
+            capsize=5,
+        )
+        ax.set_xticks(positions, data["sample"])
+        ax.set_xlabel("Sample")
+        ax.set_ylabel("Measurement")
+        ax.set_title("Mean measurement with standard deviation")
+        ax.grid(axis="y", alpha=0.25)
+        fig.tight_layout()
+        plt.show()
+    except (ValueError, TypeError, OSError) as error:
+        print(f"The workbook could not be analysed. {error}")
+    except Exception as error:
+        print(
+            "The workbook could not be read as an Excel .xlsx file. "
+            f"Details: {error}"
+        )
+```
+
+Selecting another workbook changes the OJS variables and reruns the entire
+Python block. Keeping loading, validation, calculation, and plotting together
+ensures that every output belongs to the currently selected file.
+
+## How it works
+
+The OJS file input returns a browser [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File)
+object. The file is converted to an ordinary array of byte values so Quarto Live
+can transfer it into the Pyodide environment.
+
+```{ojs}
+//| eval: false
+//| code-fold: true
+//| code-summary: OJS file picker and byte conversion
+
+viewof workbook_file = Inputs.file({ // <1>
+  label: "Select an Excel workbook",
+  accept: ".xlsx",
+  required: false
+})
+
+workbook_name = workbook_file ? workbook_file.name : null
+workbook_bytes = workbook_file
+  ? Array.from(new Uint8Array(await workbook_file.arrayBuffer())) // <2>
+  : null
+```
+
+1. `Inputs.file()` creates the browser-native file selector.
+2. `arrayBuffer()` reads the selected file locally, and `Uint8Array` exposes
+   its binary contents as bytes.
+
+The Python cell declares both OJS values as reactive inputs. It reconstructs a
+file-like object, validates the workbook before calculating anything, and then
+creates the table and plot.
+
+```{python}
+#| eval: false
+#| code-fold: true
+#| code-summary: Reactive Python workbook analysis
+
+#| input:
+#|   - workbook_bytes
+#|   - workbook_name
+
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from IPython.display import display
+
+required_columns = [
+    "sample", "measurement_1", "measurement_2", "measurement_3"
+]
+measurement_columns = required_columns[1:]
+
+if workbook_bytes is None:
+    print("Select an Excel workbook to begin the analysis.")
+else:
+    data = pd.read_excel(io.BytesIO(bytes(workbook_bytes))) # <1>
+    missing_columns = [
+        column for column in required_columns if column not in data.columns
+    ] # <2>
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+
+    data = data.loc[:, required_columns].copy()
+    data[measurement_columns] = data[measurement_columns].apply(
+        pd.to_numeric, errors="raise"
+    ) # <3>
+    data["mean"] = data[measurement_columns].mean(axis=1)
+    data["standard_deviation"] = data[measurement_columns].std(axis=1) # <4>
+
+    display(data.round(3))
+
+    fig, ax = plt.subplots()
+    positions = np.arange(len(data))
+    ax.errorbar(
+        positions,
+        data["mean"],
+        yerr=data["standard_deviation"],
+        fmt="o",
+        capsize=5,
+    ) # <5>
+    ax.set_xticks(positions, data["sample"])
+    ax.set_xlabel("Sample")
+    ax.set_ylabel("Measurement")
+    ax.set_title("Mean measurement with standard deviation")
+    plt.show()
+```
+
+1. `io.BytesIO` gives pandas a file-like view of the transferred bytes.
+2. Validate the public column schema before selecting or calculating data.
+3. Reject values that cannot be interpreted as numbers.
+4. Pandas calculates the row-wise mean and sample standard deviation.
+5. Matplotlib displays each mean with its standard-deviation error bar.
+
+The abbreviated authoring example emphasizes the data flow. The runnable cell
+above adds friendly handling for an absent file, empty data, invalid cells, and
+unreadable workbooks so learners see guidance rather than a traceback.
+
+## Adapting the pattern
+
+The same approach can support laboratory measurements, field observations,
+instrument exports, or survey data. Change the accepted file type, schema
+checks, and analysis to match the activity. Keep validation close to the upload
+step, and explain whether data stays in the browser or is sent elsewhere.

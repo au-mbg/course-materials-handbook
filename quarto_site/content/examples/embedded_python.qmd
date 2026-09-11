@@ -1,0 +1,77 @@
+---
+title: Embedded Interactive Computation
+---
+
+[Quarto Live](https://r-wasm.github.io/quarto-live/) embeds executable R and
+Python cells directly in a Quarto page. The code runs in the reader's browser,
+so a static website can provide editable examples, automated exercise feedback,
+plots, and data analysis without a separate computation server.
+
+Embedded cells are useful when an explanation needs more scaffolding than a
+REPL, but a complete notebook environment would add unnecessary complexity.
+For a notebook-style alternative, see the [JupyterLite example](jupyterlite.qmd).
+
+## Examples
+
+- [Scaffolded Python exercises](embedded_computation/python_exercises.qmd)
+  develops a sequence around Himmelblau's function. It demonstrates setup
+  cells, custom checks, targeted feedback, hints, solutions, optimization, and
+  validation of a learner-created plot.
+- [Analysing uploaded data](embedded_computation/data_upload.qmd) combines an
+  Observable JavaScript file picker with Python running in the browser. Readers
+  can upload an Excel workbook, validate it, calculate summary statistics, and
+  plot the results without sending the file to a server.
+
+## Installation
+
+From the directory containing the Quarto project's `_quarto.yml`, run:
+
+```default
+pixi run quarto add r-wasm/quarto-live
+```
+
+This installs the extension below the project's `_extensions` directory. Enable
+it for a page by selecting a Quarto Live HTML format in the YAML header:
+
+```yaml
+---
+title: An interactive page
+format: live-html
+---
+```
+
+Projects that define their HTML theme and stylesheet centrally may need to
+repeat those settings under `live-html`, as demonstrated in the example pages.
+For a fuller introduction to authoring cells, see
+[Interactive Python](../code_interactive/quarto-live-pyodide.qmd).
+
+## Execution environments
+
+Ordinary interactive cells share the global execution environment by default,
+so a later cell can use definitions created by an earlier cell. Exercises are
+isolated from one another to avoid accidental cross-talk. Setup cells marked
+with `#| setup: true` provide definitions for the other cells belonging to the
+same exercise.
+
+See [Managing Environments](https://r-wasm.github.io/quarto-live/exercises/environments.html)
+for details.
+
+## Connecting OJS and embedded computation
+
+Quarto Live cells can consume reactive values created by Observable JavaScript
+(OJS). List the OJS variable names under the cell's `input` option:
+
+```python
+#| input:
+#|   - selected_value
+```
+
+When `selected_value` changes, Quarto Live passes the new value into the
+browser-based R or Python environment and reevaluates the cell. This makes OJS
+controls—including file selectors—useful front ends for embedded analysis.
+Quarto Live performs automatic conversion between common JavaScript, R, and
+Python data types; binary files can be transferred as arrays of bytes.
+
+See the Quarto Live documentation on
+[reactivity with OJS](https://r-wasm.github.io/quarto-live/interactive/reactivity.html)
+and [data conversion](https://r-wasm.github.io/quarto-live/interactive/data.html).
