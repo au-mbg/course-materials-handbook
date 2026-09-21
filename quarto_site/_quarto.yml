@@ -73,6 +73,7 @@ website:
           - content/maintenance/quarto-extensions.qmd
           - content/maintenance/profiles.qmd
           - content/maintenance/github-pages.qmd
+          - content/maintenance/scheduling.qmd
 
   favicon: content/assets/aulogo_uk_var2_blue.png
 
