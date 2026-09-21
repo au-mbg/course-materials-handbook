@@ -1,0 +1,266 @@
+---
+title: Project scripts
+---
+
+A course repository accumulates assumptions: every figure should exist, every
+download button should point to a file, every exercise should appear in the
+release calendar, and specialist files should still open in the software used
+for teaching. Small project-specific scripts can check these assumptions in a
+repeatable way.
+
+These checks are especially useful:
+
+- Before a course starts again after several months of inactivity.
+- After moving, renaming, or deleting content.
+- After changing Quarto configuration, extensions, or dependencies.
+- Before publishing a substantial update.
+- While diagnosing a failed render or a problem reported by a learner.
+
+The [`structural_biology` validation scripts](https://github.com/au-mbg/structural_biology/tree/main/scripts)
+are one worked example. They reflect that repository's layout and teaching
+tools; another course should automate its own recurring mistakes rather than
+copy every check unchanged.
+
+For related setup, see [Pixi configuration](pixi-configuration.qmd),
+[Quarto configuration](quarto-configuration.qmd), and
+[Release scheduling](scheduling.qmd).
+
+## What the example project checks
+
+The structure biology project separates checks by responsibility:
+
+| Check | What it catches | Result |
+|---|---|---|
+| Figures | Missing images and unsupported image formats | Errors fail the check; unused figures are reported as warnings |
+| Downloads | Download buttons that refer to missing files | Broken links fail; unreferenced files are reported |
+| Quarto navigation | Explicit pages or generated navigation targets that match no `.qmd` files | Invalid targets fail; unreferenced source pages are reported |
+| Release schedules | Missing source files and exercises absent from either release calendar | Incomplete or invalid calendars fail |
+| PyMOL files | `.pml` scripts or `.pse` sessions that PyMOL cannot load successfully | Invalid files fail |
+
+The checks answer questions specific to the project. For example, its schedule
+checker knows that every exercise must occur in both the student and solution
+calendars. That rule would be wrong for a repository without scheduled
+solutions.
+
+The PyMOL checker is also different from an ordinary file-reference check: it
+launches PyMOL in command-line mode and therefore requires PyMOL to be
+installed. It searches the system path, supports a `PYMOL_BIN` override, and
+also checks the standard macOS application location. A project check should
+report external requirements this clearly rather than failing with an obscure
+subprocess error.
+
+## Write a small checker
+
+A checker does not need a testing framework or a large abstraction. A useful
+starting pattern is:
+
+```python
+from pathlib import Path
+import sys
+
+
+REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+CONTENT_ROOT = REPOSITORY_ROOT / "course_notes"
+EXCLUDED_DIRECTORIES = {"_site", "_preview", ".quarto"}
+
+
+def source_documents() -> list[Path]:
+    return [
+        path
+        for path in CONTENT_ROOT.rglob("*.qmd")
+        if not EXCLUDED_DIRECTORIES.intersection(path.parts)
+    ]
+
+
+def check_project() -> list[str]:
+    problems: list[str] = []
+
+    for document in source_documents():
+        if not document.read_text(encoding="utf-8").strip():
+            problems.append(f"Empty source document: {document}")
+
+    return problems
+
+
+def main() -> int:
+    problems = check_project()
+    for problem in problems:
+        print(f"ERROR: {problem}")
+
+    if problems:
+        print(f"Found {len(problems)} problem(s).")
+        return 1
+
+    print("Check passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+This deliberately simple example checks for empty source documents. Replace
+that rule with something useful for the course, such as resolving image paths,
+comparing schedule entries with exercise files, or validating required front
+matter.
+
+Several details make the pattern reliable:
+
+- Resolve the repository relative to `__file__`, rather than assuming the
+  command is launched from a particular directory.
+- Exclude rendered output and caches from source-file searches.
+- Collect all problems so one run gives the maintainer a useful work list.
+- Print paths and messages that identify how to fix each problem.
+- Exit with `0` when the check passes and a nonzero status when it fails.
+
+The exit status is what lets Pixi, a shell script, or GitHub Actions stop on a
+real error. Informational findings such as unused files may instead be warnings
+when they do not make the project invalid.
+
+::: {.callout-tip title="Start with recurring mistakes"}
+Do not begin by building a general validation framework. When the same mistake
+has caused trouble more than once, encode that project rule in the smallest
+script that can check it deterministically.
+:::
+
+## Expose checks as Pixi tasks
+
+Put validation scripts in a predictable directory such as `scripts/`, then
+give contributors stable commands in `pixi.toml`:
+
+```toml
+[tasks.check-figures]
+cmd = "python scripts/check_figures.py"
+description = "Check figure references and report unused figures"
+
+[tasks.check-downloads]
+cmd = "python scripts/check_downloads.py"
+description = "Check download links and report unreferenced files"
+
+[tasks.check-pymol-scripts]
+cmd = "python scripts/check_scripts.py --directory course_notes/files"
+description = "Open the course's downloadable PyMOL files"
+```
+
+Pixi supplies the Python environment and any declared libraries, so
+maintainers do not need to remember which environment or command to use. It
+also gives the check a memorable name:
+
+```bash
+pixi run check-figures
+pixi run check-downloads
+pixi run check-pymol-scripts
+```
+
+Programs outside the Pixi environment still need to be installed separately.
+For example, the structure biology PyMOL checker uses the locally installed
+PyMOL executable even though Python runs inside Pixi.
+
+### Check one file while editing
+
+A focused task is convenient when working on one specialist file. Pixi can
+declare and forward an argument:
+
+```toml
+[tasks.check-script]
+cmd = "python scripts/check_scripts.py --file $INIT_CWD/{{file}}"
+args = [{ "arg" = "file" }]
+description = "Check one PyMOL script"
+```
+
+Run it from anywhere in the repository with:
+
+```bash
+pixi run check-script course_notes/files/example.pml
+```
+
+`$INIT_CWD` is the directory from which the user invoked Pixi. It prevents a
+relative file argument from changing meaning if the task itself has a
+different working directory.
+
+## Provide one command for routine maintenance
+
+Individual commands are best for fixing one category of problem. Before a new
+course run or a large publication, maintainers benefit from one command:
+
+```bash
+pixi run check-all
+```
+
+In `structural_biology`, `scripts/check_all.py` runs each checker as a separate
+subprocess. It records the exit status, continues when one check fails, prints
+a final pass/fail table, and exits nonzero if any check failed. The summary
+also names the individual Pixi task to rerun for detailed output.
+
+This pattern gives a complete overview without mixing all validation logic
+into one program. A new check can be added as another entry in the aggregate
+runner while remaining independently usable.
+
+Keep the routine aggregate command reasonably fast. The structure biology
+runner checks text-based `.pml` files but skips slower `.pse` session files;
+maintainers can run the broader specialist check separately when needed. The
+right boundary depends on the course: a check that routinely takes too long is
+likely to be skipped.
+
+```toml
+[tasks.check-all]
+cmd = "python scripts/check_all.py"
+description = "Run all local project checks and summarize the results"
+```
+
+## Optionally run checks in GitHub Actions
+
+Local use is the first priority: maintainers should be able to run checks
+before pushing and see actionable output immediately. Once `check-all` is
+stable and non-interactive, the same command can be added to an existing
+GitHub Actions build:
+
+```yaml
+- name: Run project checks
+  run: pixi run check-all
+```
+
+Only include checks whose dependencies are available on the Actions runner.
+A local check that needs a licensed application, graphical session, or large
+download may be better documented as a pre-publication maintainer step. If a
+check is required in CI, its nonzero exit status should fail the job.
+
+## Decide what belongs in a script
+
+Good validation targets are deterministic repository properties:
+
+- A referenced local file exists.
+- A source page is included in navigation or intentionally excluded.
+- Every exercise has a release-calendar entry.
+- Required metadata is present and uses an allowed value.
+- A domain-specific file can be parsed or opened by its teaching software.
+
+Checks are less suitable for subjective quality such as whether an explanation
+is clear, whether a figure is legible, or whether a page looks good on a phone.
+Those still require review.
+
+Project checks complement rather than replace:
+
+- A complete Quarto render of every published profile.
+- Visual inspection of important pages and generated formats.
+- Tests for extension or application code.
+- A final review of dates, links, and teaching content.
+
+See [Editing tutorial](../authoring/editing-tutorial.qmd) for the ordinary
+edit–preview–render workflow.
+
+## Add checks to another course
+
+1. List mistakes that have previously broken publication or teaching.
+2. Choose one rule that can be checked deterministically.
+3. Write a small script that reports all violations and returns a meaningful
+   exit status.
+4. Test it against both valid input and a deliberately broken example.
+5. Add an individual Pixi task with a clear name and description.
+6. Add fast, reliable checks to `check-all`.
+7. Document external requirements and when slower checks should be run.
+8. Run the checks before a new course instance and after structural updates.
+
+Keep scripts beside the project rules they enforce and update them when the
+repository layout or teaching workflow changes. A stale validator can be as
+misleading as having no validator at all.

@@ -281,7 +281,7 @@ jobs:
 GitHub interprets the cron expression in UTC. This example requests one run per day at 03.17. Scheduled workflows can be delayed during periods of high load, so an eligible page normally appears during the next successful build rather than at an exact minute. Choose a cadence appropriate for the course; more frequent builds consume more Actions minutes.
 
 Under the repository's **Settings → Pages**, set the deployment source to
-**GitHub Actions**. Run the workflow manually once and inspect its build andd eployment jobs before relying on the schedule.
+**GitHub Actions**. Run the workflow manually once and inspect its build and deployment jobs before relying on the schedule.
 
 ::: {.callout-warning}
 Publishing solutions below `/solution/` separates the two versions for
@@ -302,7 +302,4 @@ Before the course begins:
 5. After a scheduled date passes, confirm that the next workflow run succeeds
    and that the expected page appears.
 
-When a release does not appear, first inspect the Actions run, then reproduce
-`pixi run render-all` locally. Common causes are a missing schedule entry, an
-incorrect `href`, invalid YAML, a render failure, or a GitHub Pages artifact
-path that does not match the configured output directory.
+When a release does not appear, first inspect the Actions run, then reproduce `pixi run render-all` locally. Common causes are a missing schedule entry, an incorrect `href`, invalid YAML, a render failure, or a GitHub Pages artifact path that does not match the configured output directory.

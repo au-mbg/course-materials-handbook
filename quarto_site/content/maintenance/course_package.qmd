@@ -1,0 +1,389 @@
+---
+title: Supporting Python packages
+---
+
+Course notebooks often need code that is important for the activity but not
+important for students to read in that moment. A small Python package inside
+the course repository gives that code a stable home and lets notebooks use a
+short, intentional interface.
+
+This pattern is useful for:
+
+- A complex method whose implementation would distract from the scientific
+  question being studied.
+- A function that students write in an earlier session and reuse later.
+- Interactive widgets whose internal event handling is not the learning goal.
+- Dataset loaders, plotting helpers, answer checks, and environment-specific
+  compatibility code.
+- Shared definitions that would otherwise be copied between notebooks.
+
+The package remains part of the course and is maintained with it. It does not
+need to be published to the Python Package Index (PyPI).
+
+For related setup, see [Pixi configuration](pixi-configuration.qmd),
+[Project scripts](scripts.qmd), [Python code cells](../code_interactive/python-code-cells.qmd),
+and [Notebooks](../code_interactive/notebooks.qmd).
+
+## Keep the learning objective visible
+
+A package should remove incidental complexity, not hide the subject students
+are meant to learn. Before moving code into a package, ask whether students
+should be able to explain, modify, or implement it.
+
+For example, students might derive and implement a fitting function in one
+session. A later session can import the tested function while focusing on
+experimental design. The earlier implementation remains available in the
+course material or linked source, but it no longer has to be repeated in every
+notebook.
+
+Treat imported course functions as a small public API:
+
+- Give functions names that make sense in the teaching context.
+- Use predictable inputs and return values.
+- Add concise docstrings and type annotations where they improve comprehension.
+- Avoid hidden global state and surprising import-time behavior.
+- Link to the source when interested students may benefit from reading it.
+
+::: {.callout-tip title="Package stable scaffolding"}
+Keep exploratory code and the code students are expected to write in the
+notebook. Package stable scaffolding that is reused or would otherwise obscure
+the activity.
+:::
+
+## Two course examples
+
+The existing course packages illustrate different useful sizes:
+
+- [`molecular_biology_II/course-utils`](https://github.com/au-mbg/molecular-biology-II/tree/main/course-utils)
+  is deliberately small. It supplies answer-checking behavior and a Pyodide
+  compatibility patch used by a ChIP-seq notebook.
+- [`fysisk_biokemi/course-utils`](https://github.com/au-mbg/fysisk-biokemi/tree/main/course-utils)
+  is a broader library of datasets, reusable analysis functions, and
+  interactive widgets used across lessons and exercises.
+
+Start small. A package can grow when genuinely shared needs appear; creating a
+large abstraction before the course uses it makes maintenance harder.
+
+## Create a minimal package
+
+Place the package in a directory such as `course-utils/` beside the course
+material:
+
+```text
+course-repository/
+├── course/
+│   └── lessons/
+├── course-utils/
+│   ├── pyproject.toml
+│   ├── README.md
+│   ├── src/
+│   │   └── course_utils/
+│   │       ├── __init__.py
+│   │       └── calculations.py
+│   └── tests/
+│       └── test_calculations.py
+└── pixi.toml
+```
+
+The `src` layout ensures notebooks import the installed package rather than
+accidentally importing directly from the source directory. The
+[Python Packaging User Guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+and [uv build-backend documentation](https://docs.astral.sh/uv/concepts/build-backend/)
+describe this layout in more detail.
+
+### Package metadata
+
+Create `course-utils/pyproject.toml`:
+
+```toml
+[project]
+name = "course-utils"
+version = "0.1.0"
+description = "Supporting utilities for the example course"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+```
+
+The distribution name is `course-utils`, as it will appear in installation
+commands and wheel filenames. Python imports use the normalized module name
+`course_utils`; hyphens are not valid in an import statement.
+
+The `uv_build` backend is a good fit for a pure-Python course package and uses
+`src/course_utils` by default. Packages containing compiled extensions require
+a different build backend and platform-specific build process, which is
+outside this introductory pattern.
+
+### Define a public helper
+
+Put the implementation in `src/course_utils/calculations.py`:
+
+```python
+def dilution_volume(
+    initial_concentration: float,
+    final_concentration: float,
+    final_volume: float,
+) -> float:
+    """Return the stock volume required for a dilution."""
+    if initial_concentration <= 0:
+        raise ValueError("initial_concentration must be positive")
+    if final_concentration < 0 or final_volume < 0:
+        raise ValueError("final values cannot be negative")
+
+    return final_concentration * final_volume / initial_concentration
+```
+
+Export the intended public interface from `src/course_utils/__init__.py`:
+
+```python
+from .calculations import dilution_volume
+
+__all__ = ["dilution_volume"]
+```
+
+Notebooks can now use a stable, readable import without depending on the
+internal file layout:
+
+```python
+from course_utils import dilution_volume
+
+stock_volume = dilution_volume(100, 10, 25)
+```
+
+## Install it in the Pixi environment
+
+Install the repository copy as an editable PyPI dependency in the root
+`pixi.toml`:
+
+```toml
+[pypi-dependencies]
+course-utils = { path = "course-utils", editable = true }
+```
+
+Editable installation means changes under `course-utils/src/` are available
+without rebuilding a wheel. Pixi records the package as part of the course
+environment, so local previews, renders, and notebooks all import the same
+code.
+
+Run a quick import check after changing the environment:
+
+```bash
+pixi run python -c "from course_utils import dilution_volume; print(dilution_volume(100, 10, 25))"
+```
+
+### Place dependencies deliberately
+
+Libraries required whenever the installed package runs belong in
+`[project].dependencies`. Tools used only to render or maintain the course,
+such as Quarto or a formatter, belong in the surrounding Pixi environment.
+
+Use optional dependencies when delivery environments need different sets:
+
+```toml
+[project.optional-dependencies]
+standard = [
+    "ipywidgets>=8.1",
+    "matplotlib>=3.10",
+]
+pyodide = [
+    "ipywidgets",
+    "matplotlib",
+]
+```
+
+The `fysisk_biokemi` package uses this approach to distinguish its standard
+teaching environment from browser-based Python. Avoid duplicating a dependency
+between Pixi and the package unless both layers genuinely use it independently.
+
+## Add a small test
+
+Moving code out of a notebook makes it reusable, but it also makes breakage
+less visible. Test the public behavior in
+`course-utils/tests/test_calculations.py`:
+
+```python
+import pytest
+
+from course_utils import dilution_volume
+
+
+def test_dilution_volume() -> None:
+    assert dilution_volume(100, 10, 25) == 2.5
+
+
+def test_initial_concentration_must_be_positive() -> None:
+    with pytest.raises(ValueError):
+        dilution_volume(0, 10, 25)
+```
+
+Add `pytest` to a development environment or the root Pixi dependencies and
+expose the test through a task:
+
+```toml
+[tasks.test-course-utils]
+cmd = "pytest course-utils/tests"
+```
+
+Run the package tests after changing shared behavior, then render at least one
+representative document that imports it. Tests can verify a calculation, but
+they do not show whether a widget renders correctly or whether its instructions
+still make sense. See [Project scripts](scripts.qmd) for broader repository
+checks.
+
+## Distribute the package to students
+
+Editable installation is ideal for maintainers, but student notebooks may run
+outside the course repository. Choose a distribution method that matches that
+environment.
+
+### Install from the course repository
+
+An ordinary Python environment with Git available can install the package
+directly from its subdirectory:
+
+```bash
+python -m pip install "course-utils @ git+https://github.com/ORGANISATION/COURSE.git@main#subdirectory=course-utils"
+```
+
+Pin a tag or commit instead of `main` when a notebook must remain reproducible.
+This method gives students the source distribution and asks their environment
+to build it during installation.
+
+### Build a wheel
+
+A wheel is a ready-to-install package archive. It avoids requiring Git and
+makes the exact distributed version visible in the filename. Add `uv` to a
+development Pixi environment and provide build tasks:
+
+```toml
+[tasks.build-course-utils]
+cmd = "rm -rf dist && uv build --wheel course-utils --out-dir dist"
+description = "Build the course utility wheel"
+
+[tasks.check-course-utils-wheel]
+cmd = "uvx pkginfo dist/*.whl"
+description = "Inspect the built wheel metadata"
+```
+
+`uv build` creates a filename such as
+`course_utils-0.1.0-py3-none-any.whl`. The `py3-none-any` tags indicate a
+pure-Python wheel that is not tied to one operating system or CPU architecture.
+See the official [uv build documentation](https://docs.astral.sh/uv/concepts/projects/build/)
+for the build process.
+
+Publish the wheel under the course site's `wheels/` directory. For example,
+copy the validated wheel into the Quarto project before its Pages artifact is
+uploaded and include the directory as a project resource:
+
+```yaml
+# _quarto.yml
+project:
+  resources:
+    - wheels/**
+```
+
+The deployed wheel then has a stable HTTPS URL such as:
+
+```text
+https://ORGANISATION.github.io/COURSE/wheels/course_utils-0.1.0-py3-none-any.whl
+```
+
+A raw GitHub URL to a committed wheel is also possible, as used by
+`molecular_biology_II`, but publishing versioned wheels with the course site
+keeps student downloads with the rest of the deployed material.
+
+### Bootstrap a hosted notebook
+
+A notebook can use the local editable package when it is already available and
+fall back to the published wheel elsewhere:
+
+```python
+try:
+    import course_utils
+except ImportError:
+    %pip install -q https://ORGANISATION.github.io/COURSE/wheels/course_utils-0.1.0-py3-none-any.whl
+    import course_utils
+```
+
+Pin the wheel version in teaching material. Whenever distributed behavior
+changes:
+
+1. Update and test the package code.
+2. Increment the version in `pyproject.toml`.
+3. Build and inspect the new wheel.
+4. Publish it with the course site.
+5. Update notebook installation URLs.
+6. Test in a clean student environment.
+
+Changing code without changing the version and URL makes browser and notebook
+caches difficult to reason about.
+
+## Colab and browser-based Python
+
+Google Colab is an ordinary hosted Python environment. It can generally
+install a pure-Python wheel or install from Git, subject to network access and
+the package's declared Python requirements. A wheel is usually faster and
+more predictable for students.
+
+Pyodide runs Python as WebAssembly in the browser. Its package installer can
+load pure-Python wheels and packages for which compatible Pyodide builds exist;
+an ordinary wheel containing compiled desktop extensions will not work. See
+the [micropip documentation](https://micropip.pyodide.org/) and the handbook's
+[Pyodide guidance](../code_interactive/quarto-live-pyodide.qmd).
+
+For a browser notebook, publish the wheel over HTTPS and request the Pyodide
+extras when needed:
+
+```python
+%pip install -q "course-utils[pyodide] @ https://ORGANISATION.github.io/COURSE/wheels/course_utils-0.1.0-py3-none-any.whl"
+```
+
+Test this installation in the actual browser environment. A successful local
+Pixi import does not prove that all dependencies are available in Pyodide.
+
+Environment patches sometimes belong in a course package. For example,
+`molecular_biology_II` adapts HTTP CSV loading when running under Pyodide. Keep
+such behavior platform-gated, documented, and idempotent so importing the
+package twice has the same effect as importing it once. Prefer an explicit
+setup function over import-time side effects unless every consumer genuinely
+requires the patch.
+
+## Package data and widgets
+
+Small datasets, templates, or static files can live inside the import package
+and be read with `importlib.resources`. This makes them travel with the wheel
+instead of relying on the notebook's working directory. The
+`fysisk_biokemi.datasets` module uses this pattern for course datasets.
+
+Widgets are also strong package candidates when their internal code would
+overwhelm the lesson. Keep the notebook-facing call small, for example:
+
+```python
+from course_utils.widgets import dilution_helper
+
+dilution_helper()
+```
+
+Test widgets in every intended frontend: local Jupyter, rendered Quarto
+output, Colab, or Pyodide may support different widget libraries and transport
+mechanisms.
+
+## Maintenance checklist
+
+Before relying on a course package for a new teaching period:
+
+1. Run its tests in a clean Pixi environment.
+2. Render representative student and solution documents that import it.
+3. Build the wheel and inspect its metadata and contents.
+4. Install the wheel into a clean Python environment and run an import check.
+5. Test each hosted environment, especially Colab or Pyodide, separately.
+6. Confirm that published notebook URLs refer to the current package version.
+7. Check widgets, bundled datasets, and other non-code resources manually.
+
+A supporting package reduces duplication, but it also creates shared code on
+which many lessons may depend. Keep its interface small, version distributed
+changes, and test the same artifact that students will install.
