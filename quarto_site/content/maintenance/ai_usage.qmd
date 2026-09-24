@@ -361,6 +361,88 @@ I accepted the plan, and the resulting implementation worked as intended. I veri
 
 In this case, my prompt provided various technical details, and the project repository already had a similar extension for Google Colab, both of which I suspect added enough context to make this a relatively easy task. 
 
+### Help getting started with course editing 
+
+One can also use these LLM/AI's for general help with working with course material, as an example I asked the following 
+
+::: {.custom-quote}
+I am part the teaching team for a university course that uses this repository for teaching materials
+
+[https://github.com/au-mbg/fysisk-biokemi](https://github.com/au-mbg/fysisk-biokemi)
+
+I have been given this handbook as a reference manual.
+
+[https://au-mbg.github.io/course-materials-handbook/](https://au-mbg.github.io/course-materials-handbook/)
+
+Please help me get started, I need to make some small edits to the some exercises.
+::: 
+
+I had given the agent access to an empty directory and after two minutes of thinking it responded with 
+
+::: {.custom-quote}
+You’re ready to edit. I cloned the course repository into:
+
+[fysisk-biokemi](/Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi)
+
+Exercises are stored in:
+
+[course/lessons/exercises](/Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi/course/lessons/exercises)
+
+To preview the instructor version:
+
+```bash
+cd /Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi
+pixi run preview master
+```
+
+To preview the student version:
+
+```bash
+pixi run preview student
+```
+
+Exercises are Quarto `.qmd` files. Mark an instructor-only solution like this:
+
+````markdown
+```{python}
+#| solution: true
+
+answer = 42
+print(answer)
+```
+````
+
+Mark a student exercise cell like this:
+
+````markdown
+```{python}
+#| exercise: true
+#| eval: false
+
+# Add your code here
+...
+```
+````
+
+Before committing, review and render your changes:
+
+```bash
+git diff
+pixi run render master
+git status
+```
+
+Useful references:
+
+- [Authoring guide](/Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi/notes/authoring.md)
+- [Git workflow](/Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi/notes/git.md)
+- [Repository README](/Users/au616397/Repositories/mbg/courses/test_response/fysisk-biokemi/README.md)
+
+Tell me which exercise you want changed and describe the edits, and I can implement and check them for you.
+::: 
+
+At which point it had verified that `pixi` was installed on my computer, used `git` to install it and had made the repository ready for me to start editing.
+
 [^1]: Because they are plain text, the advantages of plain text over technically weird formats such as `.docx` cannot be overstated. 
 
 [^2]: I don't have an easily accessible record of it, so you can only see my response to it.

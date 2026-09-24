@@ -30,6 +30,19 @@ available:
 pixi --version
 ```
 
+## Install an editor 
+
+While it is possible to work with the files directly on GitHub it is ***strongly*** recommended 
+to use an editor, such as [Visual Studio Code](https://code.visualstudio.com/). 
+
+With an editor, like VS Code, a directory can be opened to get an overview of all the 
+files in the explorer and to activate directory specific settings (such as environments etc.)
+Such editors have build in terminal windows where `pixi` and other commands can be conveniently run [^1]. The screenshot below shows such as a setup in VS Code. 
+
+![Screenshot of VS Code setup. Depicted color theme is for illustration purposes, dark mode themes lead to better code.](media/vs_code.png){.lightbox width="90%" fig-align="center"}
+
+In VS Code a directory can be opened in this way from the `File > Open Folder`-menu or using the keyboard shortcut {{< kbd mac=Command-O win=Control+O >}}.
+
 ## Let the repository install its tools
 
 After cloning a course repository, use its task commands from the repository
@@ -64,3 +77,5 @@ It is possible to install Quarto and language dependencies independently.
 That route is intended for maintainers who need to modify or debug the build
 environment; it is more likely to differ from the versions used by automated
 publishing.
+
+[^1]: And be used for general navigation, which is easier than the explorer once you get a hang for it. 
